@@ -1,139 +1,3 @@
-// // src/app/test/page.tsx
-// "use client";
-
-// import { useRouter } from "next/navigation";
-// import { useEffect, useMemo } from "react";
-// import { useTestStore } from "@/app/store/useTestStore";
-// import permaData from "@/app/data/perma.json";
-// import StageHeader from "@/app/components/test/StageHeader";
-// import QuestionCard from "@/app/components/test/QuestionCard";
-// import NavControls from "@/app/components/test/NavControls";
-// import { nextStageAfter } from "@/app/utils/flow";
-// import { computePermaScores } from "@/app/utils/perma";
-// import MatrixRain from "@/app/components/MatrixRain";
-
-// type Stage = "intro" | "permaTest" | "results";
-
-// type Question = {
-//   id: string;
-//   text: string;
-//   reverse_score?: boolean;
-//   options?: string[];
-// };
-
-// type PermaJson = Record<"P" | "E" | "S" | "M" | "A", Question[]>;
-
-// const steps = ["intro", "permaTest", "results"] as const;
-
-// function flatten(obj: unknown): Question[] {
-//   if (Array.isArray(obj)) return obj as Question[];
-//   if (obj && typeof obj === "object")
-//     return Object.values(obj as Record<string, Question[]>).flat();
-//   return [];
-// }
-
-// export default function TestPage() {
-//   const router = useRouter();
-
-//   const {
-//     currentStage,
-//     currentIndex,
-//     setIndex,
-//     setStage,
-//     answers,
-//     saveAnswer,
-//     setResults,
-//   } = useTestStore() as {
-//     currentStage: Stage;
-//     currentIndex: number;
-//     setIndex: (i: number) => void;
-//     setStage: (s: Stage) => void;
-//     answers: Record<string, Record<string, number | undefined>>;
-//     saveAnswer: (bundle: string, id: string, value: number) => void;
-//     setResults: (payload: unknown) => void;
-//   };
-
-//   // intro → permaTest 자동 진입
-//   useEffect(() => {
-//     if (currentStage === "intro") setStage("permaTest");
-//   }, [currentStage, setStage]);
-
-//   const bundle = useMemo((): { key: string | null; items: Question[] } => {
-//     if (currentStage === "permaTest") {
-//       return { key: "perma", items: flatten(permaData as PermaJson) };
-//     }
-//     return { key: null, items: [] };
-//   }, [currentStage]);
-
-//   const total = bundle.items.length;
-//   const q = bundle.items[currentIndex];
-//   const val =
-//     bundle.key && q?.id
-//       ? (answers[bundle.key]?.[q.id] as number | undefined)
-//       : undefined;
-
-//   function onNext() {
-//     if (currentIndex < total - 1) {
-//       setIndex(currentIndex + 1);
-//       return;
-//     }
-
-//     const next = nextStageAfter(currentStage);
-//     if (next === "results") {
-//       const perma = computePermaScores(answers.perma || {});
-//       // ✅ 요약(perma) + 원본 답(answersRaw)만 저장
-//       setResults({ perma, answersRaw: answers });
-
-//       const codeStr = [
-//         perma.codes?.P,
-//         perma.codes?.E,
-//         perma.codes?.S,
-//         perma.codes?.M,
-//         perma.codes?.A,
-//       ]
-//         .join("")
-//         .toLowerCase();
-
-//       router.push(`/result/${codeStr}`);
-//     } else {
-//       setStage(next as Stage);
-//     }
-//   }
-
-//   return (
-//     <main className="min-h-screen relative">
-//       <MatrixRain />
-//       <div className="relative z-10">
-//         <StageHeader
-//           currentStage={currentStage}
-//           currentIndex={currentIndex}
-//           total={total}
-//           steps={steps as unknown as string[]}
-//         />
-//         <section className="max-w-3xl mx-auto px-4 py-10">
-//           {q && (
-//             <QuestionCard
-//               question={q}
-//               value={val}
-//               onChange={(v: number) => {
-//                 if (bundle.key) saveAnswer(bundle.key, q.id, v); // ✅ 값만 저장
-//               }}
-//             />
-//           )}
-//           <NavControls
-//             canPrev={currentIndex > 0}
-//             canNext={val !== undefined && val !== null}
-//             isLast={currentIndex === total - 1}
-//             onPrev={() => setIndex(currentIndex - 1)}
-//             onNext={onNext}
-//             onFinish={onNext}
-//           />
-//         </section>
-//       </div>
-//     </main>
-//   );
-// }
-
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -146,7 +10,6 @@ import NavControls from "@/app/components/test/NavControls";
 import { nextStageAfter } from "@/app/utils/flow";
 import { computePermaScores } from "@/app/utils/perma";
 import MatrixRain from "@/app/components/MatrixRain";
-import DebugPanel from "../components/dev/DebugPanel";
 
 type Stage = "intro" | "permaTest" | "results";
 
@@ -159,7 +22,12 @@ type Question = {
 
 type PermaJson = Record<"P" | "E" | "S" | "M" | "A", Question[]>;
 
-const steps = ["intro", "permaTest", "results"] as const;
+// 현실 접속 단계 (지정된 영문 유지)
+const steps = [
+  "Access Contact",
+  "Code authentication",
+  "Connection command",
+] as const;
 
 function flatten(obj: unknown): Question[] {
   if (Array.isArray(obj)) return obj as Question[];
@@ -189,10 +57,29 @@ export default function TestPage() {
     setResults: (payload: unknown) => void;
   };
 
-  // intro → permaTest 자동 진입
+  // 인트로 → 현실 접속 테스트 자동 진입
   useEffect(() => {
     if (currentStage === "intro") setStage("permaTest");
   }, [currentStage, setStage]);
+
+  // 현실 인식 척도 번호 제거 (순수한 응답만 표시)
+  useEffect(() => {
+    const removeNumbersFromOptions = () => {
+      const optionButtons = document.querySelectorAll(".option-button");
+      optionButtons.forEach((button) => {
+        const text = button.textContent || "";
+        // "1. 전혀 그렇지 않다" → "전혀 그렇지 않다"로 변경
+        const cleanText = text.replace(/^\d+\.\s*/, "");
+        if (cleanText !== text) {
+          button.textContent = cleanText;
+        }
+      });
+    };
+
+    // 현실 인터페이스 업데이트 후 실행
+    const timer = setTimeout(removeNumbersFromOptions, 100);
+    return () => clearTimeout(timer);
+  }, [currentIndex, currentStage]); // 접속 단계나 인덱스 변경 시마다 실행
 
   const bundle = useMemo((): { key: string | null; items: Question[] } => {
     if (currentStage === "permaTest") {
@@ -218,7 +105,7 @@ export default function TestPage() {
     console.log(next);
     if (next === "results") {
       const perma = computePermaScores(answers.perma || {});
-      // ✅ 요약(perma) + 원본 답(answersRaw) 저장
+      // ✅ 현실 접속 결과(perma) + 원본 응답 데이터(answersRaw) 저장
       setResults({ perma, answersRaw: answers });
 
       const codeStr = [
@@ -230,10 +117,7 @@ export default function TestPage() {
       ]
         .join("")
         .toLowerCase();
-      // .toUpperCase();
 
-      // router.push(`/result`);
-      // router.push(`/result/${codeStr}`);
       router.push(`/result?code=${codeStr}`);
     } else {
       setStage(next as Stage);
@@ -241,16 +125,16 @@ export default function TestPage() {
   }
 
   return (
-    <main className="min-h-screen relative font-mono bg-black crt-screen">
-      {/* 매트릭스 배경 */}
+    <main className="min-h-screen relative font-mono bg-black crt-screen crt-flicker">
+      {/* 현실 접속 매트릭스 배경 */}
       <MatrixRain />
 
-      {/* CRT 오버레이 */}
+      {/* 현실 인터페이스 CRT 오버레이 */}
       <div className="crt-overlay" />
       <div className="scanlines" />
-      <div className="crt-flicker" />
+      <div className="crt-flicker-effect" />
 
-      {/* 콘텐츠 레이어 */}
+      {/* 현실 접속 콘텐츠 레이어 */}
       <div className="relative z-10 crt-content">
         <div className="crt-container">
           <StageHeader
@@ -261,19 +145,18 @@ export default function TestPage() {
           />
         </div>
 
-        <section className="max-w-3xl mx-auto px-4 py-10">
+        <section className="test-section">
           {q && (
             <div className="crt-question-container">
               <QuestionCard
                 question={q}
                 value={val}
                 onChange={(v: number) => {
-                  if (bundle.key) saveAnswer(bundle.key, q.id, v); // ✅ 값만 저장
+                  if (bundle.key) saveAnswer(bundle.key, q.id, v);
                 }}
               />
             </div>
           )}
-
           <div className="crt-controls-container">
             <NavControls
               canPrev={currentIndex > 0}
@@ -288,17 +171,32 @@ export default function TestPage() {
       </div>
 
       <style jsx>{`
-        /* 배경 라디얼 + CRT 감성 */
+        /* HomePage와 정확히 동일한 배경 스타일 */
         .crt-screen {
           background: radial-gradient(
             ellipse at center,
-            #000a00 0%,
-            #000400 70%,
-            #000000 100%
+            rgba(0, 15, 8, 0.7),
+            rgba(0, 0, 0, 0.85)
           );
+          /* 모바일 안전 영역 지원 */
+          padding-top: env(safe-area-inset-top, 0);
+          padding-bottom: env(safe-area-inset-bottom, 0);
+          padding-left: env(safe-area-inset-left, 0);
+          padding-right: env(safe-area-inset-right, 0);
         }
 
-        /* 비네팅 */
+        /* HomePage와 동일한 CRT 효과 클래스들 */
+        .crt-flicker {
+          animation: crt-flicker 4s infinite ease-in-out;
+        }
+
+        .crt-text-glow {
+          text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
+            0 0 20px rgba(0, 255, 100, 0.6), 2px 2px 2px #000000,
+            -1px -1px 1px #000000, 1px -1px 1px #000000, -1px 1px 1px #000000;
+        }
+
+        /* 현실 경계 비네팅 효과 */
         .crt-overlay {
           position: fixed;
           top: 0;
@@ -308,13 +206,13 @@ export default function TestPage() {
           background: radial-gradient(
             ellipse at center,
             transparent 0%,
-            rgba(0, 0, 0, 0.5) 100%
+            rgba(0, 0, 0, 0.3) 100%
           );
           pointer-events: none;
           z-index: 1;
         }
 
-        /* 스캔라인 */
+        /* HomePage와 동일한 스캔라인 색상 */
         .scanlines {
           position: fixed;
           top: 0;
@@ -325,21 +223,21 @@ export default function TestPage() {
             0deg,
             transparent,
             transparent 1px,
-            rgba(0, 40, 0, 0.15) 1px,
-            rgba(0, 40, 0, 0.15) 3px
+            rgba(0, 255, 140, 0.1) 1px,
+            rgba(0, 255, 140, 0.1) 3px
           );
           pointer-events: none;
           z-index: 2;
         }
 
-        /* 플리커 */
-        .crt-flicker {
+        /* 현실 신호 플리커 */
+        .crt-flicker-effect {
           position: fixed;
           top: 0;
           left: 0;
           width: 100%;
           height: 100%;
-          background: rgba(0, 30, 0, 0.03);
+          background: rgba(0, 255, 140, 0.02);
           animation: crt-flicker 0.1s infinite linear alternate;
           pointer-events: none;
           z-index: 3;
@@ -347,92 +245,118 @@ export default function TestPage() {
 
         .crt-content {
           filter: blur(0.3px) contrast(1.2);
+          min-height: 100vh;
+          display: flex;
+          flex-direction: column;
         }
 
+        /* HomePage와 동일한 컨테이너 스타일 */
         .crt-container {
-          background: rgba(0, 10, 0, 0.3);
-          border-bottom: 1px solid #004400;
+          background: rgba(0, 12, 6, 0.4);
+          border-bottom: 2px solid rgba(0, 255, 140, 0.4);
+          padding: 10px 15px;
+          backdrop-filter: blur(3px);
+          box-shadow: 0 0 30px rgba(0, 255, 120, 0.2),
+            inset 0 0 30px rgba(0, 60, 30, 0.2);
         }
 
+        /* 현실 인식 테스트 섹션 */
+        .test-section {
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          padding: 15px;
+          max-width: 100%;
+          margin: 0 auto;
+          box-sizing: border-box;
+        }
+
+        /* HomePage와 동일한 질문 컨테이너 스타일 */
         .crt-question-container {
-          background: rgba(0, 15, 0, 0.2);
-          border: 1px solid #003300;
-          border-radius: 4px;
-          padding: 20px;
+          background: rgba(0, 12, 6, 0.6);
+          border: 2px solid rgba(0, 255, 140, 0.4);
+          border-radius: 8px;
+          padding: 15px;
           margin-bottom: 20px;
-          box-shadow: inset 0 0 20px rgba(0, 60, 0, 0.1),
-            0 0 10px rgba(0, 100, 0, 0.2);
+          box-shadow: 0 0 30px rgba(0, 255, 120, 0.2),
+            inset 0 0 30px rgba(0, 60, 30, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(3px);
+          flex: 1;
+          display: flex;
+          align-items: center;
+          min-height: 200px;
         }
 
+        /* HomePage와 동일한 제어 컨테이너 스타일 */
         .crt-controls-container {
-          background: rgba(0, 10, 0, 0.4);
-          border: 1px solid #002200;
-          border-radius: 4px;
-          padding: 20px;
-          box-shadow: inset 0 0 15px rgba(0, 40, 0, 0.1),
-            0 0 5px rgba(0, 80, 0, 0.2);
+          background: rgba(0, 12, 6, 0.6);
+          border: 2px solid rgba(0, 255, 140, 0.4);
+          border-radius: 8px;
+          padding: 15px;
+          box-shadow: 0 0 30px rgba(0, 255, 120, 0.2),
+            inset 0 0 30px rgba(0, 60, 30, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.6);
+          backdrop-filter: blur(3px);
+          margin-top: auto;
         }
 
-        /* 전역 CRT 폰트/색 오버라이드 (test 하위 컴포넌트 포함) */
+        /* HomePage와 동일한 글로벌 스타일 */
         :global(.crt-container *),
         :global(.crt-question-container *),
         :global(.crt-controls-container *) {
-          font-family: "Courier New", monospace !important;
-          color: #00aa00 !important;
-          text-shadow: 1px 1px 0px rgba(0, 50, 0, 0.8), 0 0 2px #002200 !important;
+          font-family: "Courier New", ui-monospace, SFMono-Regular, Menlo,
+            monospace !important;
+          font-weight: 600 !important;
+          color: #bbffdd !important;
+          text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
+            0 0 20px rgba(0, 255, 100, 0.6), 2px 2px 2px #000000,
+            -1px -1px 1px #000000, 1px -1px 1px #000000, -1px 1px 1px #000000 !important;
         }
 
-        /* NavControls 버튼 그룹 레이아웃 */
-        :global(.crt-controls-container > div) {
-          display: flex !important;
-          justify-content: center !important;
-          align-items: center !important;
-          gap: 30px !important;
-          flex-wrap: wrap !important;
-        }
-
-        /* 버튼 기본 스타일 */
+        /* HomePage와 동일한 버튼 스타일 */
         :global(.crt-controls-container button) {
-          background: #001a00 !important;
-          border: 2px solid #006600 !important;
-          color: #00ff00 !important;
-          padding: 12px 24px !important;
-          margin: 5px !important;
+          background: rgba(0, 12, 6, 0.6) !important;
+          border: 2px solid rgba(0, 255, 140, 0.4) !important;
+          color: #bbffdd !important;
+          padding: 12px 20px !important;
           border-radius: 4px !important;
+          cursor: pointer !important;
           transition: all 0.3s ease !important;
-          font-family: "Courier New", monospace !important;
-          font-weight: 700 !important;
-          letter-spacing: 2px !important;
+          font-family: "Courier New", ui-monospace, SFMono-Regular, Menlo,
+            monospace !important;
+          font-weight: 600 !important;
+          font-size: 13px !important;
+          letter-spacing: 1px !important;
           text-transform: uppercase !important;
-          min-width: 120px !important;
+          min-width: 100px !important;
+          max-width: 140px !important;
           position: relative !important;
           overflow: hidden !important;
-          text-shadow: 0 0 5px #00aa00, 0 0 10px #008800, 1px 1px 0px #000 !important;
-          box-shadow: 0 0 15px rgba(0, 255, 0, 0.4),
-            inset 0 0 5px rgba(0, 150, 0, 0.3) !important;
+          backdrop-filter: blur(3px) !important;
+          box-shadow: 0 0 15px rgba(0, 255, 120, 0.2),
+            inset 0 0 15px rgba(0, 60, 30, 0.2) !important;
+          text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
+            0 0 20px rgba(0, 255, 100, 0.6), 2px 2px 2px #000000,
+            -1px -1px 1px #000000, 1px -1px 1px #000000, -1px 1px 1px #000000 !important;
         }
 
-        /* 이전 버튼 강조 */
-        :global(.crt-controls-container button:first-child) {
-          border-color: #004400 !important;
-          color: #00cc00 !important;
-          background: #000f00 !important;
-          text-shadow: 0 0 3px #008800, 0 0 6px #006600, 1px 1px 0px #000 !important;
-          box-shadow: 0 0 10px rgba(0, 200, 0, 0.3),
-            inset 0 0 5px rgba(0, 100, 0, 0.2) !important;
+        :global(.crt-controls-container button:disabled) {
+          opacity: 0.4 !important;
+          cursor: not-allowed !important;
+          border-color: rgba(0, 255, 140, 0.2) !important;
+          background: rgba(0, 12, 6, 0.3) !important;
         }
 
-        /* 다음/완료 버튼 강조 */
-        :global(.crt-controls-container button:last-child) {
-          border-color: #00aa00 !important;
-          color: #00ff00 !important;
-          background: #002200 !important;
-          text-shadow: 0 0 8px #00ff00, 0 0 15px #00aa00, 1px 1px 0px #000 !important;
-          box-shadow: 0 0 20px rgba(0, 255, 0, 0.5),
-            inset 0 0 8px rgba(0, 200, 0, 0.4) !important;
+        :global(.crt-controls-container button:not(:disabled):hover),
+        :global(.crt-controls-container button:not(:disabled):focus) {
+          border-color: rgba(0, 255, 140, 0.6) !important;
+          background: rgba(0, 12, 6, 0.8) !important;
+          box-shadow: 0 0 25px rgba(0, 255, 120, 0.4),
+            inset 0 0 25px rgba(0, 60, 30, 0.3) !important;
+          transform: scale(1.02) !important;
+          outline: none !important;
         }
 
-        /* 버튼 스캔 라인 */
         :global(.crt-controls-container button::before) {
           content: "" !important;
           position: absolute !important;
@@ -443,106 +367,84 @@ export default function TestPage() {
           background: linear-gradient(
             90deg,
             transparent,
-            rgba(0, 255, 0, 0.3),
+            rgba(0, 255, 140, 0.2),
             transparent
           ) !important;
-          animation: button-scan 2s infinite ease-in-out !important;
-          pointer-events: none !important;
+          animation: button-scan 3s infinite !important;
         }
 
-        /* 호버 */
-        :global(.crt-controls-container button:hover) {
-          background: #003300 !important;
-          border-color: #00ff00 !important;
-          color: #ffffff !important;
-          box-shadow: 0 0 30px rgba(0, 255, 0, 0.8),
-            0 0 50px rgba(0, 255, 0, 0.4), inset 0 0 15px rgba(0, 255, 0, 0.3) !important;
-          text-shadow: 0 0 10px #00ff00, 0 0 20px #00aa00, 0 0 30px #008800,
-            1px 1px 0px #000 !important;
-          transform: scale(1.05) !important;
+        :global(.crt-controls-container > div) {
+          display: flex !important;
+          justify-content: center !important;
+          align-items: center !important;
+          gap: 20px !important;
         }
 
-        /* 이전 버튼 호버 */
-        :global(.crt-controls-container button:first-child:hover) {
-          background: #002200 !important;
-          border-color: #00cc00 !important;
-          color: #00ff00 !important;
-        }
-
-        /* 다음/완료 버튼 호버 */
-        :global(.crt-controls-container button:last-child:hover) {
-          background: #004400 !important;
-          border-color: #00ff00 !important;
-          box-shadow: 0 0 35px rgba(0, 255, 0, 0.9),
-            0 0 60px rgba(0, 255, 0, 0.5), inset 0 0 20px rgba(0, 255, 0, 0.4) !important;
-        }
-
-        /* 비활성 */
-        :global(.crt-controls-container button:disabled) {
-          background: #000500 !important;
-          border-color: #002200 !important;
-          color: #004400 !important;
-          text-shadow: 0 0 1px #002200, 1px 1px 0px #000 !important;
-          cursor: not-allowed !important;
-          box-shadow: 0 0 5px rgba(0, 50, 0, 0.2),
-            inset 0 0 3px rgba(0, 30, 0, 0.1) !important;
-          transform: none !important;
-        }
-
-        /* 진행바(필요 시 StageHeader 내부) */
-        :global(.crt-container [role="progressbar"]) {
-          background: rgba(0, 20, 0, 0.5) !important;
-          border: 1px solid #004400 !important;
-        }
-        :global(.crt-container [role="progressbar"] > div) {
-          background: linear-gradient(
-            90deg,
-            #004400,
-            #008800,
-            #00aa00
-          ) !important;
-          box-shadow: 0 0 10px rgba(0, 150, 0, 0.5) !important;
-        }
-
-        /* 헤더 텍스트 */
+        /* 컨테이너별 세부 스타일 */
         :global(.crt-container h1),
         :global(.crt-container h2),
         :global(.crt-container h3) {
-          font-family: "Courier New", monospace !important;
-          font-weight: 700 !important;
-          letter-spacing: 2px !important;
-          text-transform: uppercase !important;
-          color: #00cc00 !important;
-          text-shadow: 1px 1px 0px rgba(0, 80, 0, 0.8), 0 0 3px #003300,
-            2px 2px 0px #000 !important;
+          color: #bbffdd !important;
+          font-size: 16px !important;
+          letter-spacing: 1px !important;
+          margin: 0 !important;
+          text-align: center !important;
         }
 
-        /* 플리커 애니메이션 */
+        :global(.crt-question-container .question-text) {
+          color: #bbffdd !important;
+          font-size: 14px !important;
+          line-height: 1.5 !important;
+          text-align: center !important;
+          margin-bottom: 15px !important;
+        }
+
+        :global(.crt-question-container .option-button) {
+          background: rgba(0, 12, 6, 0.4) !important;
+          border: 1px solid rgba(0, 255, 140, 0.3) !important;
+          color: #bbffdd !important;
+          padding: 10px 14px !important;
+          margin: 4px 0 !important;
+          border-radius: 4px !important;
+          cursor: pointer !important;
+          width: 100% !important;
+          text-align: left !important;
+          font-size: 12px !important;
+          transition: all 0.2s ease !important;
+          backdrop-filter: blur(2px) !important;
+        }
+
+        :global(.crt-question-container .option-button:hover),
+        :global(.crt-question-container .option-button:focus) {
+          background: rgba(0, 12, 6, 0.6) !important;
+          border-color: rgba(0, 255, 140, 0.5) !important;
+          box-shadow: 0 0 15px rgba(0, 255, 120, 0.3) !important;
+          outline: none !important;
+        }
+
+        :global(.crt-question-container .option-button.selected) {
+          background: rgba(0, 12, 6, 0.8) !important;
+          border-color: rgba(0, 255, 140, 0.7) !important;
+          box-shadow: 0 0 20px rgba(0, 255, 120, 0.5) !important;
+        }
+
+        /* HomePage와 동일한 애니메이션 */
         @keyframes crt-flicker {
-          0% {
-            opacity: 1;
-          }
-          95% {
-            opacity: 1;
-          }
-          96% {
-            opacity: 0.97;
-          }
-          97% {
-            opacity: 1;
-          }
-          98% {
-            opacity: 0.98;
-          }
-          99% {
-            opacity: 0.99;
-          }
+          0%,
+          95%,
+          97%,
+          99%,
           100% {
             opacity: 1;
           }
+          96% {
+            opacity: 0.98;
+          }
+          98% {
+            opacity: 0.97;
+          }
         }
 
-        /* 버튼 스캔 */
         @keyframes button-scan {
           0% {
             left: -100%;
@@ -554,9 +456,243 @@ export default function TestPage() {
             left: -100%;
           }
         }
-      `}</style>
 
-      <DebugPanel />
+        /* 태블릿 이상에서의 스타일 */
+        @media (min-width: 768px) {
+          .crt-container {
+            padding: 20px 30px;
+          }
+
+          .test-section {
+            padding: 30px;
+            max-width: 800px;
+          }
+
+          .crt-question-container {
+            padding: 25px;
+            margin-bottom: 30px;
+            min-height: 250px;
+            border-radius: 12px;
+          }
+
+          .crt-controls-container {
+            padding: 25px;
+            border-radius: 12px;
+          }
+
+          :global(.crt-controls-container > div) {
+            gap: 30px !important;
+          }
+
+          :global(.crt-controls-container button) {
+            padding: 15px 24px !important;
+            min-width: 120px !important;
+            max-width: 160px !important;
+            font-size: 14px !important;
+            letter-spacing: 2px !important;
+          }
+
+          :global(.crt-container h1),
+          :global(.crt-container h2),
+          :global(.crt-container h3) {
+            font-size: 20px !important;
+            letter-spacing: 2px !important;
+          }
+
+          :global(.crt-question-container .question-text) {
+            font-size: 16px !important;
+          }
+
+          :global(.crt-question-container .option-button) {
+            font-size: 14px !important;
+            padding: 12px 16px !important;
+            margin: 6px 0 !important;
+          }
+
+          :global(.crt-controls-container button:hover),
+          :global(.crt-controls-container button:focus) {
+            transform: scale(1.05) !important;
+          }
+        }
+
+        /* 대형 화면에서의 추가 최적화 */
+        @media (min-width: 1024px) {
+          .test-section {
+            max-width: 1000px;
+            padding: 40px;
+          }
+
+          .crt-question-container {
+            padding: 30px;
+            min-height: 300px;
+          }
+
+          .crt-controls-container {
+            padding: 30px;
+          }
+
+          :global(.crt-container h1),
+          :global(.crt-container h2),
+          :global(.crt-container h3) {
+            font-size: 24px !important;
+            letter-spacing: 3px !important;
+          }
+
+          :global(.crt-question-container .question-text) {
+            font-size: 18px !important;
+          }
+
+          :global(.crt-controls-container button) {
+            font-size: 16px !important;
+            padding: 18px 30px !important;
+            min-width: 140px !important;
+            max-width: 180px !important;
+          }
+        }
+
+        /* HomePage와 동일한 접근성 지원 */
+        @media (prefers-contrast: high) {
+          .crt-screen {
+            background: #000;
+          }
+
+          :global(.crt-container *),
+          :global(.crt-question-container *),
+          :global(.crt-controls-container *) {
+            text-shadow: none !important;
+          }
+
+          :global(.crt-controls-container button) {
+            border-width: 3px !important;
+          }
+
+          :global(.crt-controls-container button:hover),
+          :global(.crt-controls-container button:focus) {
+            box-shadow: 0 0 0 3px #00ffbf !important;
+          }
+        }
+
+        /* HomePage와 동일한 모션 감소 설정 */
+        @media (prefers-reduced-motion: reduce) {
+          * {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+          }
+
+          .crt-flicker,
+          .crt-flicker-effect {
+            animation: none !important;
+            opacity: 1 !important;
+          }
+
+          :global(.crt-controls-container button::before) {
+            animation: none !important;
+          }
+
+          :global(.crt-controls-container button:hover),
+          :global(.crt-controls-container button:focus) {
+            transform: none !important;
+          }
+        }
+
+        /* 모바일 최적화 */
+        @media (max-width: 767px) {
+          .test-section {
+            padding: max(10px, env(safe-area-inset-top, 0)) 10px
+              max(10px, env(safe-area-inset-bottom, 0));
+          }
+
+          .crt-question-container {
+            padding: 12px;
+            min-height: 180px;
+          }
+
+          .crt-controls-container {
+            padding: 12px;
+          }
+
+          :global(.crt-controls-container > div) {
+            flex-direction: row !important;
+            justify-content: space-between !important;
+            gap: 12px !important;
+          }
+
+          :global(.crt-controls-container button) {
+            flex: 1 !important;
+            max-width: 48% !important;
+            min-width: 100px !important;
+          }
+
+          :global(.crt-container h1),
+          :global(.crt-container h2),
+          :global(.crt-container h3) {
+            font-size: 14px !important;
+            letter-spacing: 1px !important;
+          }
+
+          :global(.crt-question-container .question-text) {
+            font-size: 12px !important;
+          }
+
+          :global(.crt-question-container .option-button) {
+            font-size: 11px !important;
+            padding: 8px !important;
+          }
+        }
+
+        /* 가로 모드 최적화 */
+        @media (orientation: landscape) and (max-height: 600px) {
+          .crt-content {
+            padding: 5px 0;
+          }
+
+          .crt-container {
+            padding: 8px 15px;
+          }
+
+          .test-section {
+            padding: 10px 15px;
+          }
+
+          .crt-question-container {
+            min-height: 120px;
+            padding: 15px;
+            margin-bottom: 10px;
+          }
+
+          .crt-controls-container {
+            padding: 15px;
+          }
+
+          :global(.crt-container h1),
+          :global(.crt-container h2),
+          :global(.crt-container h3) {
+            font-size: 14px !important;
+          }
+        }
+
+        /* 소형 디바이스 추가 최적화 */
+        @media (max-width: 360px) {
+          .test-section {
+            padding: 8px;
+          }
+
+          .crt-question-container {
+            padding: 10px;
+          }
+
+          .crt-controls-container {
+            padding: 10px;
+          }
+
+          :global(.crt-controls-container button) {
+            font-size: 11px !important;
+            padding: 10px 12px !important;
+            letter-spacing: 0.5px !important;
+          }
+        }
+      `}</style>
     </main>
   );
 }
