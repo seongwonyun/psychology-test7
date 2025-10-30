@@ -1,17 +1,3 @@
-/**
- * HomePage Component - 모바일 최적화 버전
- *
- * 모바일 환경에서 올바른 작동을 위해 다음 viewport 메타태그가 필요합니다:
- * <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
- *
- * 주요 모바일 최적화:
- * - 동적 viewport height (100dvh) 사용
- * - iOS 안전 영역 (safe-area-inset) 고려
- * - 터치 최소 크기 (44px) 준수
- * - iOS zoom 방지 (font-size: 16px)
- * - 터치 피드백 및 네이티브 스타일 제거
- */
-
 "use client";
 import React, { useEffect, useState, KeyboardEvent, JSX, useMemo } from "react";
 import { useRouter } from "next/navigation";
@@ -35,7 +21,7 @@ interface SystemInfo {
  * ────────────────────────────────────────────────────────────*/
 function BootLogOverlay({
   onDone,
-  duration = 3200, // 전체 자동 종료(최소치). 메시지 타이밍은 line.delay로 제어
+  duration = 3200,
 }: {
   onDone: () => void;
   duration?: number;
@@ -43,7 +29,6 @@ function BootLogOverlay({
   const [linesShown, setLinesShown] = useState<number>(0);
   const [finished, setFinished] = useState<boolean>(false);
 
-  // 현실 접속 준비 메시지 (한국어 서사)
   const lines = useMemo(
     () => [
       { text: ">> 현실 접속 프로토콜 초기화 중...", delay: 300 },
@@ -57,7 +42,6 @@ function BootLogOverlay({
     []
   );
 
-  // 순차 출력
   useEffect(() => {
     let mounted = true;
     const timeouts: number[] = [];
@@ -70,11 +54,9 @@ function BootLogOverlay({
       timeouts.push(t);
     });
 
-    // 자동 종료 시점 (duration 이후)
     const end = window.setTimeout(() => {
       if (!mounted) return;
       setFinished(true);
-      // 페이드 아웃 시간 고려해 약간 뒤에 onDone
       window.setTimeout(onDone, 350);
     }, Math.max(duration, lines[lines.length - 1].delay + 250));
 
@@ -85,7 +67,6 @@ function BootLogOverlay({
     };
   }, [lines, duration, onDone]);
 
-  // 스킵: 클릭/Enter
   useEffect(() => {
     const onKey = (e: KeyboardEvent | any) => {
       if (e.key === "Enter") {
@@ -119,15 +100,15 @@ function BootLogOverlay({
         .bootlog-overlay {
           position: fixed;
           inset: 0;
-          z-index: 50; /* 최상단 (기존 오버레이 위) */
+          z-index: 50;
           display: grid;
           place-items: center;
           background: radial-gradient(
             ellipse at center,
             rgba(0, 15, 8, 0.7),
             rgba(0, 0, 0, 0.85)
-          ); /* 투명도 조정 */
-          backdrop-filter: blur(3px); /* 블러 조정 */
+          );
+          backdrop-filter: blur(3px);
           transition: opacity 220ms ease;
         }
         .bootlog-hide {
@@ -138,10 +119,10 @@ function BootLogOverlay({
           width: min(90vw, 720px);
           max-height: 70vh;
           overflow: hidden;
-          border: 2px solid rgba(0, 255, 140, 0.4); /* 테두리 강화 */
-          background: rgba(0, 12, 6, 0.6); /* 배경 투명도 조정 */
+          border: 2px solid rgba(0, 255, 140, 0.4);
+          background: rgba(0, 12, 6, 0.6);
           box-shadow: 0 0 30px rgba(0, 255, 120, 0.2),
-            inset 0 0 30px rgba(0, 60, 30, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.6); /* 그림자 강도 조정 */
+            inset 0 0 30px rgba(0, 60, 30, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.6);
           padding: 18px 20px;
           border-radius: 8px;
         }
@@ -153,12 +134,11 @@ function BootLogOverlay({
           color: #bbffdd;
           text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
             0 0 20px rgba(0, 255, 100, 0.6), 2px 2px 2px #000000,
-            /* 검정 아웃라인 강화 */ -1px -1px 1px #000000, 1px -1px 1px #000000,
-            -1px 1px 1px #000000;
+            -1px -1px 1px #000000, 1px -1px 1px #000000, -1px 1px 1px #000000;
           white-space: pre-wrap;
           word-break: break-word;
           animation: bootlog-pop 220ms ease-out;
-          font-weight: 600; /* 글자 두께 증가 */
+          font-weight: 600;
         }
         .bootlog-caret {
           margin-right: 8px;
@@ -226,7 +206,7 @@ export default function HomePage(): JSX.Element {
     screenRes: "",
   });
 
-  const [showBoot, setShowBoot] = useState<boolean>(true); // T2 overlay boot log
+  const [showBoot, setShowBoot] = useState<boolean>(true);
 
   useEffect(() => {
     const updateTime = () => {
@@ -268,7 +248,6 @@ export default function HomePage(): JSX.Element {
       return;
     }
 
-    // reset first
     const resetAll = () => {
       if (typeof window !== "undefined") {
         sessionStorage.clear();
@@ -292,20 +271,16 @@ export default function HomePage(): JSX.Element {
   if (stage === "initial") {
     return (
       <main className="crt-screen min-h-screen min-h-[100dvh] relative overflow-hidden flex items-center justify-center">
-        {/* MatrixRain Background with enhanced blur */}
         <div className="bg-layer">
           <MatrixRain />
         </div>
 
-        {/* Enhanced overlays for better separation */}
         <div className="crt-overlay"></div>
         <div className="scanlines"></div>
         <div className="crt-flicker"></div>
 
-        {/* Content with better background separation and mobile optimization */}
-        <section className="crt-content">
-          {/* ASCII Art */}
-          <div className="hacker-ascii mb-6 crt-text-strong">
+        <section className="crt-content-fixed">
+          <div className="hacker-ascii crt-text-strong">
             <div className="ascii-line">
               ██╗ ██╗ ██████╗ ██╗██████╗ ███████╗██╗███╗ ███╗
             </div>
@@ -328,8 +303,7 @@ export default function HomePage(): JSX.Element {
             </div>
           </div>
 
-          {/* Info Lines */}
-          <div className="space-y-2 mb-6">
+          <div className="info-lines">
             <div className="hacker-line delay-100 crt-text-strong">
               [ establishing connection to reality... ]
             </div>
@@ -341,8 +315,7 @@ export default function HomePage(): JSX.Element {
             </div>
           </div>
 
-          {/* Enhanced input panel */}
-          <div className="enhanced-input-panel mb-6 space-y-4 w-full">
+          <div className="enhanced-input-panel space-y-4">
             <div className="port-title crt-text-strong">
               접속 터미널이 열였습니다.
             </div>
@@ -381,8 +354,7 @@ export default function HomePage(): JSX.Element {
             </button>
           </div>
 
-          {/* Enhanced system info */}
-          <div className="system-info-grid mb-4 w-full">
+          <div className="system-info-grid">
             <div className="port-info dim-note">
               브라우저: {systemInfo.userAgent} | 플랫폼: {systemInfo.platform}
             </div>
@@ -394,24 +366,21 @@ export default function HomePage(): JSX.Element {
             </div>
           </div>
 
-          {/* Terminal prompt */}
           <div className="port-terminal crt-text-strong crt-flicker-slow">
             사용자@현실:{currentTime}$ <span className="crt-cursor">█</span>
           </div>
         </section>
 
-        {/* 현실 접속 준비 오버레이 */}
         {showBoot && <BootLogOverlay onDone={() => setShowBoot(false)} />}
 
         <style jsx>{`
           /* ─────────────── G1: Enhanced Sharp Neon with better contrast ─────────────── */
           .crt-text-strong {
-            color: #bbffdd !important; /* 본체 텍스트 색 (식별 핵심) */
+            color: #bbffdd !important;
             text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
               0 0 20px rgba(0, 255, 100, 0.6), 2px 2px 3px #000000,
-              /* 강화된 검정 아웃라인 */ -2px -2px 2px #000000,
-              2px -2px 2px #000000, -2px 2px 2px #000000;
-            font-weight: 600; /* 글자 두께 증가 */
+              -2px -2px 2px #000000, 2px -2px 2px #000000, -2px 2px 2px #000000;
+            font-weight: 600;
           }
           .crt-text-glow-hover:hover,
           .crt-text-glow-hover:focus {
@@ -431,7 +400,7 @@ export default function HomePage(): JSX.Element {
             position: fixed;
             inset: 0;
             z-index: 0;
-            filter: blur(1.5px) contrast(0.9) brightness(0.85); /* 블러 줄이고 밝기 증가 */
+            filter: blur(1.5px) contrast(0.9) brightness(0.85);
           }
 
           /* ─────────────── Enhanced Screen + Overlays ─────────────── */
@@ -454,7 +423,7 @@ export default function HomePage(): JSX.Element {
             background: radial-gradient(
               ellipse at center,
               rgba(0, 0, 0, 0.1) 0%,
-              rgba(0, 0, 0, 0.4) 100% /* 오버레이 강도 줄임 */
+              rgba(0, 0, 0, 0.4) 100%
             );
             pointer-events: none;
             z-index: 1;
@@ -480,30 +449,33 @@ export default function HomePage(): JSX.Element {
             pointer-events: none;
             z-index: 3;
           }
-          .crt-content {
-            max-width: 90vw;
-            padding: 20px;
+          .crt-content-fixed {
             position: relative;
             z-index: 4;
             width: 100%;
-            min-height: 100vh;
-            min-height: 100dvh; /* 동적 viewport height for mobile */
+            height: 100vh;
+            height: 100dvh;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
             text-align: center;
+            padding: 16px;
+            gap: 12px;
+            overflow: hidden;
           }
 
           /* ─────────────── Enhanced Input Panel ─────────────── */
           .enhanced-input-panel {
-            background: rgba(0, 12, 6, 0.6); /* 배경 투명도 조정 */
+            background: rgba(0, 12, 6, 0.6);
             border: 2px solid rgba(0, 255, 140, 0.4);
             border-radius: 8px;
-            padding: 24px;
+            padding: 16px;
             box-shadow: 0 0 30px rgba(0, 255, 120, 0.15),
-              inset 0 0 30px rgba(0, 60, 30, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.6); /* 그림자 강도 조정 */
-            backdrop-filter: blur(6px); /* 블러 조정 */
+              inset 0 0 30px rgba(0, 60, 30, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+            width: 100%;
+            max-width: 100%;
           }
 
           /* ─────────────── Enhanced Typographic Blocks ─────────────── */
@@ -516,7 +488,7 @@ export default function HomePage(): JSX.Element {
             animation: hacker-typewriter 0.5s ease-out forwards;
             white-space: nowrap;
             overflow: hidden;
-            font-weight: 600; /* 글자 두께 증가 */
+            font-weight: 600;
           }
           .ascii-line:nth-child(1) {
             animation-delay: 0s;
@@ -537,7 +509,7 @@ export default function HomePage(): JSX.Element {
             font-size: 11px;
             word-break: break-all;
             line-height: 1.4;
-            font-weight: 600; /* 글자 두께 증가 */
+            font-weight: 600;
           }
           .delay-100 {
             animation-delay: 0.4s;
@@ -571,14 +543,14 @@ export default function HomePage(): JSX.Element {
           }
           .port-input {
             font-family: "Courier New", monospace;
-            font-weight: 600; /* 글자 두께 증가 */
+            font-weight: 600;
             letter-spacing: 1px;
             font-size: 14px;
             border-radius: 4px;
             min-height: 48px;
-            background: rgba(0, 10, 0, 0.8); /* 배경 강화 */
+            background: rgba(0, 10, 0, 0.8);
             transition: all 0.3s ease;
-            border: 2px solid rgba(0, 255, 140, 0.5); /* 테두리 강화 */
+            border: 2px solid rgba(0, 255, 140, 0.5);
             box-shadow: inset 0 0 20px rgba(0, 60, 30, 0.3),
               0 0 0 1px rgba(0, 0, 0, 0.8);
           }
@@ -606,9 +578,9 @@ export default function HomePage(): JSX.Element {
             background: rgba(0, 10, 0, 0.3);
           }
           .btn-active {
-            border: 2px solid rgba(0, 255, 140, 0.7); /* 테두리 강화 */
+            border: 2px solid rgba(0, 255, 140, 0.7);
             color: #bbffdd;
-            background: rgba(0, 20, 10, 0.6); /* 배경 강화 */
+            background: rgba(0, 20, 10, 0.6);
             box-shadow: 0 0 20px rgba(0, 255, 140, 0.3),
               inset 0 0 20px rgba(0, 90, 60, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.8);
           }
@@ -618,15 +590,15 @@ export default function HomePage(): JSX.Element {
             flex-direction: column;
             gap: 4px;
             align-items: center;
-            background: rgba(0, 12, 6, 0.4); /* 배경 투명도 증가 */
+            background: rgba(0, 12, 6, 0.4);
             border: 1px solid rgba(0, 255, 140, 0.2);
             border-radius: 4px;
             padding: 12px;
-            backdrop-filter: blur(3px); /* 블러 조정 */
+            backdrop-filter: blur(3px);
           }
           .port-info {
             font-family: "Courier New", monospace;
-            font-weight: 600; /* 글자 두께 증가 */
+            font-weight: 600;
             letter-spacing: 1px;
             font-size: 9px;
             word-break: break-all;
@@ -638,11 +610,11 @@ export default function HomePage(): JSX.Element {
             letter-spacing: 1px;
             font-size: 11px;
             word-break: break-all;
-            background: rgba(0, 12, 6, 0.4); /* 배경 투명도 증가 */
+            background: rgba(0, 12, 6, 0.4);
             border: 1px solid rgba(0, 255, 140, 0.2);
             border-radius: 4px;
             padding: 8px 12px;
-            backdrop-filter: blur(3px); /* 블러 조정 */
+            backdrop-filter: blur(3px);
           }
 
           /* CRT flickers & cursors */
@@ -702,96 +674,106 @@ export default function HomePage(): JSX.Element {
 
           /* 모바일 기본 스타일 */
           @media (max-width: 767px) {
-            .crt-content {
-              padding: max(16px, env(safe-area-inset-top, 0)) 16px
-                max(16px, env(safe-area-inset-bottom, 0));
-              max-width: 95vw;
-              gap: 1rem;
+            .crt-content-fixed {
+              padding: max(12px, env(safe-area-inset-top, 0)) 12px
+                max(12px, env(safe-area-inset-bottom, 0));
+              gap: 8px;
+            }
+            .hacker-ascii {
+              margin-bottom: 8px;
+            }
+            .info-lines {
+              margin-bottom: 8px;
+              display: flex;
+              flex-direction: column;
+              gap: 4px;
             }
             .enhanced-input-panel {
-              padding: 20px 16px;
+              padding: 12px;
               margin: 0 auto;
               width: 100%;
-              max-width: 350px;
+              max-width: 100%;
+            }
+            .system-info-grid {
+              margin-bottom: 8px;
             }
             .ascii-line {
-              font-size: 8px;
+              font-size: 7px;
               line-height: 1.1;
             }
             .hacker-line {
-              font-size: 10px;
-              line-height: 1.3;
+              font-size: 9px;
+              line-height: 1.2;
             }
             .port-title {
-              font-size: 16px;
-              letter-spacing: 1px;
+              font-size: 14px;
+              letter-spacing: 0.5px;
             }
             .port-subtitle {
-              font-size: 12px;
-              letter-spacing: 1px;
+              font-size: 10px;
+              letter-spacing: 0.5px;
             }
             .port-label {
-              font-size: 13px;
+              font-size: 11px;
             }
             .port-input {
-              font-size: 16px; /* iOS zoom 방지 */
-              letter-spacing: 1px;
-              padding: 12px;
-              min-height: 44px; /* iOS 터치 최소 크기 */
-              -webkit-appearance: none; /* iOS 기본 스타일 제거 */
-              -webkit-border-radius: 4px; /* iOS border radius 고정 */
+              font-size: 16px;
+              letter-spacing: 0.5px;
+              padding: 10px;
+              min-height: 42px;
+              -webkit-appearance: none;
+              -webkit-border-radius: 4px;
             }
             .port-button {
-              font-size: 16px;
-              letter-spacing: 1px;
+              font-size: 14px;
+              letter-spacing: 0.5px;
               width: 100%;
-              min-height: 44px; /* iOS 터치 최소 크기 */
-              -webkit-appearance: none; /* iOS 기본 스타일 제거 */
+              min-height: 42px;
+              -webkit-appearance: none;
               cursor: pointer;
             }
             .port-button:active {
-              transform: scale(0.98); /* 터치 피드백 */
+              transform: scale(0.98);
             }
             .system-info-grid {
               flex-direction: column;
-              gap: 8px;
-              padding: 8px;
+              gap: 4px;
+              padding: 6px;
               width: 100%;
-              max-width: 350px;
+              max-width: 100%;
               margin: 0 auto;
             }
             .port-info {
-              font-size: 9px;
+              font-size: 8px;
               text-align: center;
               word-break: break-word;
+              line-height: 1.2;
             }
             .port-terminal {
-              font-size: 12px;
-              padding: 6px 10px;
-              max-width: 350px;
+              font-size: 9px;
+              padding: 6px 8px;
+              max-width: 100%;
               margin: 0 auto;
               word-break: break-all;
             }
             .bootlog-panel {
               width: min(95vw, 350px);
-              padding: 16px;
-              margin: 16px;
+              padding: 14px;
+              margin: 12px;
             }
             .bootlog-line {
-              font-size: 11px;
-              line-height: 1.4;
+              font-size: 10px;
+              line-height: 1.3;
             }
 
-            /* 모바일 키보드 대응 */
-            .crt-content {
-              padding-bottom: env(keyboard-inset-height, 0);
+            body {
+              overflow: hidden;
             }
           }
 
           /* 터치 디바이스 최적화 */
           @media (hover: none) and (pointer: coarse) {
             .port-button:hover {
-              /* 터치 디바이스에서는 hover 효과 제거 */
               text-shadow: inherit;
             }
             .crt-text-glow-hover:hover {
@@ -799,16 +781,92 @@ export default function HomePage(): JSX.Element {
             }
           }
 
+          /* 태블릿 이상 - 크기 고정 */
           @media (min-width: 768px) {
-            .crt-content {
-              max-width: 4xl;
-              padding: 40px;
+            .crt-content-fixed {
+              max-width: 600px;
+              padding: 24px;
+              gap: 12px;
+            }
+            .hacker-ascii {
+              margin-bottom: 12px;
+            }
+            .info-lines {
+              margin-bottom: 12px;
+              display: flex;
+              flex-direction: column;
+              gap: 6px;
+            }
+            .enhanced-input-panel {
+              padding: 20px;
+              width: 100%;
+              max-width: 100%;
+            }
+            .system-info-grid {
+              margin-bottom: 12px;
+              width: 100%;
+              max-width: 100%;
             }
             .ascii-line {
-              font-size: 12px;
+              font-size: 10px;
             }
             .hacker-line {
-              font-size: 14px;
+              font-size: 12px;
+            }
+            .port-title {
+              font-size: 18px;
+              letter-spacing: 1.5px;
+            }
+            .port-subtitle {
+              font-size: 13px;
+              letter-spacing: 1.5px;
+            }
+            .port-label {
+              font-size: 13px;
+            }
+            .port-input {
+              font-size: 15px;
+              letter-spacing: 1.5px;
+              padding: 12px;
+            }
+            .port-button {
+              font-size: 15px;
+              letter-spacing: 1.5px;
+              width: 100%;
+            }
+            .system-info-grid {
+              flex-direction: column;
+              gap: 6px;
+            }
+            .port-info {
+              font-size: 10px;
+              text-align: center;
+            }
+            .port-terminal {
+              font-size: 12px;
+              padding: 8px 10px;
+            }
+          }
+
+          /* 데스크톱 - 크기 고정 유지 */
+          @media (min-width: 1024px) {
+            .crt-content-fixed {
+              max-width: 650px;
+              padding: 28px;
+              gap: 14px;
+            }
+            .hacker-ascii {
+              margin-bottom: 14px;
+            }
+            .info-lines {
+              margin-bottom: 14px;
+              gap: 8px;
+            }
+            .enhanced-input-panel {
+              padding: 24px;
+            }
+            .system-info-grid {
+              margin-bottom: 14px;
             }
             .port-title {
               font-size: 20px;
@@ -816,56 +874,24 @@ export default function HomePage(): JSX.Element {
             }
             .port-subtitle {
               font-size: 14px;
-              letter-spacing: 2px;
-            }
-            .port-label {
-              font-size: 14px;
             }
             .port-input {
               font-size: 16px;
-              letter-spacing: 2px;
             }
             .port-button {
               font-size: 16px;
-              letter-spacing: 2px;
-              width: auto;
-              min-width: 200px;
             }
-            .system-info-grid {
-              flex-direction: row;
-              justify-content: space-between;
-              gap: 20px;
+            .ascii-line {
+              font-size: 11px;
+            }
+            .hacker-line {
+              font-size: 13px;
             }
             .port-info {
               font-size: 11px;
-              text-align: left;
             }
             .port-terminal {
-              font-size: 14px;
-            }
-          }
-          @media (min-width: 1024px) {
-            .port-title {
-              font-size: 24px;
-              letter-spacing: 3px;
-            }
-            .port-subtitle {
-              font-size: 16px;
-            }
-            .port-input {
-              font-size: 18px;
-            }
-            .port-button {
-              font-size: 18px;
-            }
-            .ascii-line {
-              font-size: 14px;
-            }
-            .hacker-line {
-              font-size: 16px;
-            }
-            .port-info {
-              font-size: 12px;
+              font-size: 13px;
             }
           }
 
