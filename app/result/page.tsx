@@ -2,7 +2,6 @@
 
 import React, { JSX, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { PrescriptionActions } from "@/app/components/prescription/PrescriptionActions";
 
 interface PrescriptionData {
   id: number;
@@ -34,7 +33,7 @@ interface MissionLevel {
   rewards: string[];
 }
 
-export default function ResultsPage(): JSX.Element {
+export default function RefinedResultsPage(): JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -43,8 +42,6 @@ export default function ResultsPage(): JSX.Element {
   );
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [anxietyScore, setAnxietyScore] = useState<number>(0);
-  const [depressionScore, setDepressionScore] = useState<number>(0);
   const [displayText, setDisplayText] = useState<string>("");
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [connectionPhase, setConnectionPhase] = useState<string>("");
@@ -53,7 +50,7 @@ export default function ResultsPage(): JSX.Element {
   const [matrixRain, setMatrixRain] = useState<string[]>([]);
   const [selectedMission, setSelectedMission] = useState<number>(1);
 
-  // ▼ 코멘트 입력/상태
+  // Comment state
   const [commentText, setCommentText] = useState<string>("");
   const [saving, setSaving] = useState<boolean>(false);
   const [sending, setSending] = useState<boolean>(false);
@@ -70,22 +67,16 @@ export default function ResultsPage(): JSX.Element {
       );
       setMatrixRain(newRain);
     }, 150);
-
     return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     const code = searchParams.get("code");
-    const anxiety = searchParams.get("anxiety");
-    const depression = searchParams.get("depression");
 
     if (!code) {
       router.replace("/test");
       return;
     }
-
-    setAnxietyScore(parseInt(anxiety ?? "0", 10));
-    setDepressionScore(parseInt(depression ?? "0", 10));
 
     void fetchPrescription(code);
   }, [searchParams, router]);
@@ -111,7 +102,6 @@ export default function ResultsPage(): JSX.Element {
       }
 
       await new Promise((resolve) => setTimeout(resolve, 5000));
-
       setPrescription(data);
       startTypewriter();
     } catch (err: unknown) {
@@ -198,7 +188,6 @@ export default function ResultsPage(): JSX.Element {
 
     try {
       setSending(true);
-
       const res = await fetch(`/api/results/${prescription.code}`, {
         method: "post",
         headers: { "Content-Type": "application/json" },
@@ -223,7 +212,6 @@ export default function ResultsPage(): JSX.Element {
 
   const handleSave = async (): Promise<void> => {
     if (!prescription) return;
-
     const string = commentText.trim();
     if (!string) {
       alert("MISSION REPORT REQUIRED");
@@ -232,7 +220,6 @@ export default function ResultsPage(): JSX.Element {
 
     try {
       setSaving(true);
-
       const res = await fetch(`/api/results/${prescription.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -267,7 +254,6 @@ export default function ResultsPage(): JSX.Element {
     }
   };
 
-  // Mission level mapping
   const getMissionLevels = (prescription: PrescriptionData): MissionLevel[] => [
     {
       level: 1,
@@ -597,6 +583,7 @@ export default function ResultsPage(): JSX.Element {
 
   return (
     <div className="matrix-container crt-flicker">
+      {/* Background Matrix Rain - 기존과 동일 */}
       <div className="matrix-rain">
         {matrixRain.map((char, i) => (
           <span
@@ -611,7 +598,7 @@ export default function ResultsPage(): JSX.Element {
 
       <div className="crt-screen">
         <div className="crt-content">
-          {/* Terminal Header */}
+          {/* Terminal Header - 기존 스타일 유지 */}
           <div className="terminal-header">
             <div className="status-line">
               <span className="prompt crt-text-glow">
@@ -624,17 +611,26 @@ export default function ResultsPage(): JSX.Element {
             </div>
           </div>
 
-          {/* Agent Profile Section */}
+          {/* Letter Section with Agent Profile - 편지 내용을 최상단에 항상 표시 */}
           {currentStep >= 1 && (
-            <div className="section">
-              <div className="section-header crt-text-glow">
-                [AGENT PROFILE] - CLEARANCE LEVEL: CLASSIFIED
+            <div className="letter-section">
+              <div className="letter-title crt-text-glow">
+                📧 PERSONAL MESSAGE
               </div>
-              <div className="agent-profile">
-                <div className="agent-name crt-text-glow">
-                  {prescription.name}
+              <div className="letter-content">
+                <div className="agent-profile-inline">
+                  <div className="profile-label crt-text-glow">
+                    [AGENT PROFILE] - CLEARANCE LEVEL: CLASSIFIED
+                  </div>
+                  <div className="agent-name crt-text-glow">
+                    {prescription.name}
+                  </div>
                 </div>
-                <div className="agent-message">{prescription.dear}</div>
+                {prescription.letter && (
+                  <div className="letter-body crt-text-glow">
+                    {prescription.letter}
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -685,13 +681,19 @@ export default function ResultsPage(): JSX.Element {
                 [MISSION BRIEFING] - OPERATION: NEURAL ENHANCEMENT
               </div>
               <div className="briefing-content">
-                <div className="concept-text">{prescription.concept}</div>
-                <div className="inspiration-section">
-                  <div className="inspiration-label crt-text-glow">
-                    INSPIRATION PROTOCOL:
-                  </div>
-                  <div className="inspiration-text">"{prescription.movie}"</div>
+                <div className="concept-text crt-text-glow">
+                  {prescription.concept}
                 </div>
+                {prescription.movie && (
+                  <div className="inspiration-section">
+                    <div className="inspiration-label crt-text-glow">
+                      INSPIRATION PROTOCOL:
+                    </div>
+                    <div className="inspiration-text">
+                      "{prescription.movie}"
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}
@@ -712,7 +714,8 @@ export default function ResultsPage(): JSX.Element {
                     }`}
                     onClick={() => setSelectedMission(mission.level)}
                   >
-                    LEVEL {mission.level}: {mission.title}
+                    <span className="level-number">LV.{mission.level}</span>
+                    <span className="level-name">{mission.title}</span>
                   </button>
                 ))}
               </div>
@@ -730,42 +733,21 @@ export default function ResultsPage(): JSX.Element {
                 <div className="mission-info">
                   <div className="info-row">
                     <span className="info-label">CONCEPT:</span>
-                    <span className="info-value">{currentMission.concept}</span>
+                    <span className="info-value crt-text-glow">
+                      {currentMission.concept}
+                    </span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">KEYWORD:</span>
-                    <span className="info-value crt-text-glow">
+                    <span className="info-value highlight crt-text-glow">
                       {currentMission.keyword}
                     </span>
                   </div>
                   <div className="info-row">
                     <span className="info-label">ACTIVITY:</span>
-                    <span className="info-value">
+                    <span className="info-value crt-text-glow">
                       {currentMission.activity}
                     </span>
-                  </div>
-                </div>
-
-                <div className="requirements-rewards">
-                  <div className="requirements">
-                    <div className="req-header crt-text-glow">
-                      REQUIRED ACTIONS:
-                    </div>
-                    {currentMission.requiredActions.map((action, idx) => (
-                      <div key={idx} className="req-item">
-                        ▸ {action}
-                      </div>
-                    ))}
-                  </div>
-                  <div className="rewards">
-                    <div className="reward-header crt-text-glow">
-                      MISSION REWARDS:
-                    </div>
-                    {currentMission.rewards.map((reward, idx) => (
-                      <div key={idx} className="reward-item">
-                        ◆ {reward}
-                      </div>
-                    ))}
                   </div>
                 </div>
               </div>
@@ -790,7 +772,7 @@ export default function ResultsPage(): JSX.Element {
 
                 <div className="report-footer">
                   <div className="quick-hint">
-                    Ctrl+Enter: Quick Transmission
+                    💡 Ctrl+Enter: Quick Transmission
                   </div>
                   {lastSentAt && (
                     <div className="transmission-status">
@@ -805,14 +787,14 @@ export default function ResultsPage(): JSX.Element {
                     onClick={handleSave}
                     disabled={saving || !commentText.trim()}
                   >
-                    {saving ? "SAVING..." : "SAVE TO MAINFRAME"}
+                    {saving ? "💾 SAVING..." : "💾 SAVE"}
                   </button>
                   <button
                     className="action-btn send-btn"
                     onClick={handleSendComment}
                     disabled={sending || !commentText.trim()}
                   >
-                    {sending ? "TRANSMITTING..." : "SEND REPORT"}
+                    {sending ? "📡 SENDING..." : "📡 SEND REPORT"}
                   </button>
                 </div>
               </div>
@@ -823,7 +805,7 @@ export default function ResultsPage(): JSX.Element {
           <div className="control-section">
             <div className="control-actions">
               <button className="restart-btn" onClick={handleRestart}>
-                ↻ NEW MISSION
+                🔄 NEW MISSION
               </button>
             </div>
           </div>
@@ -831,7 +813,7 @@ export default function ResultsPage(): JSX.Element {
       </div>
 
       <style jsx>{`
-        /* HomePage와 정확히 동일한 메인 스타일 */
+        /* 기존 배경색과 컨셉 유지하면서 가독성 개선 */
         .matrix-container {
           min-height: 100vh;
           background: radial-gradient(
@@ -850,7 +832,6 @@ export default function ResultsPage(): JSX.Element {
           padding-right: max(20px, env(safe-area-inset-right, 0));
         }
 
-        /* HomePage와 동일한 CRT 효과 클래스들 */
         .crt-flicker {
           animation: crt-flicker 4s infinite ease-in-out;
         }
@@ -861,6 +842,7 @@ export default function ResultsPage(): JSX.Element {
             -1px -1px 1px #000000, 1px -1px 1px #000000, -1px 1px 1px #000000;
         }
 
+        /* Matrix Rain Background - 기존과 동일 */
         .matrix-rain {
           position: absolute;
           top: 0;
@@ -879,7 +861,7 @@ export default function ResultsPage(): JSX.Element {
           font-family: "Courier New", monospace;
         }
 
-        /* HomePage와 정확히 동일한 스크린 스타일 */
+        /* CRT Screen - 기존 스타일 유지 */
         .crt-screen {
           background: rgba(0, 12, 6, 0.6);
           border: 2px solid rgba(0, 255, 140, 0.4);
@@ -899,12 +881,9 @@ export default function ResultsPage(): JSX.Element {
           padding: 30px;
           color: #bbffdd;
           font-weight: 600;
-          text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
-            0 0 20px rgba(0, 255, 100, 0.6), 2px 2px 2px #000000,
-            -1px -1px 1px #000000, 1px -1px 1px #000000, -1px 1px 1px #000000;
         }
 
-        /* Terminal Header */
+        /* Terminal Header - 기존 스타일 유지 */
         .terminal-header {
           background: rgba(0, 12, 6, 0.4);
           border: 1px solid rgba(0, 255, 140, 0.2);
@@ -934,46 +913,69 @@ export default function ResultsPage(): JSX.Element {
           opacity: 0.8;
         }
 
-        /* Section Styles */
-        .section {
-          background: rgba(0, 12, 6, 0.4);
-          border: 1px solid rgba(0, 255, 140, 0.2);
-          border-radius: 4px;
-          padding: 20px;
+        /* Letter Section - 편지 내용을 크고 읽기 쉽게 */
+        .letter-section {
+          background: rgba(0, 12, 6, 0.8);
+          border: 2px solid rgba(0, 255, 140, 0.5);
+          border-radius: 8px;
+          padding: 25px;
           margin-bottom: 20px;
           backdrop-filter: blur(3px);
+          box-shadow: 0 0 35px rgba(0, 255, 120, 0.25),
+            inset 0 0 35px rgba(0, 60, 30, 0.25);
         }
 
-        .section-header {
+        .letter-title {
           color: #bbffdd;
-          font-size: 14px;
+          font-size: 16px;
           font-weight: 700;
-          letter-spacing: 1px;
-          margin-bottom: 15px;
-          text-align: center;
+          margin: 0 0 20px 0;
+          letter-spacing: 2px;
           text-transform: uppercase;
+          text-align: center;
+          border-bottom: 1px solid rgba(0, 255, 140, 0.3);
+          padding-bottom: 12px;
         }
 
-        /* Agent Profile */
-        .agent-profile {
+        .letter-content {
+          line-height: 1.8;
+          font-size: 15px;
+        }
+
+        .agent-profile-inline {
+          background: rgba(0, 12, 6, 0.4);
+          border: 1px solid rgba(0, 255, 140, 0.3);
+          border-radius: 6px;
+          padding: 16px;
+          margin-bottom: 20px;
+          backdrop-filter: blur(2px);
           text-align: center;
+        }
+
+        .profile-label {
+          color: #bbffdd;
+          font-size: 11px;
+          font-weight: 700;
+          letter-spacing: 1.5px;
+          margin-bottom: 10px;
+          text-transform: uppercase;
         }
 
         .agent-name {
           color: #bbffdd;
-          font-size: 18px;
+          font-size: 20px;
           font-weight: 900;
-          margin-bottom: 10px;
           letter-spacing: 2px;
         }
 
-        .agent-message {
-          color: #a7ffd8;
-          font-size: 14px;
-          line-height: 1.6;
+        .letter-body {
+          color: #bbffdd;
+          margin-bottom: 16px;
+          line-height: 1.8;
+          font-size: 15px;
         }
 
-        /* Connection Screen */
+        /* Connection Screen - 기존 연결 애니메이션 복원 */
         .connection-screen {
           background: rgba(0, 12, 6, 0.6);
           border: 2px solid rgba(0, 255, 140, 0.4);
@@ -1065,20 +1067,48 @@ export default function ResultsPage(): JSX.Element {
           min-width: 40px;
         }
 
-        /* Briefing Content */
+        .section {
+          background: rgba(0, 12, 6, 0.4);
+          border: 1px solid rgba(0, 255, 140, 0.2);
+          border-radius: 4px;
+          padding: 20px;
+          margin-bottom: 20px;
+          backdrop-filter: blur(3px);
+        }
+
+        .section-header {
+          color: #bbffdd;
+          font-size: 14px;
+          font-weight: 700;
+          letter-spacing: 1px;
+          margin-bottom: 15px;
+          text-align: center;
+          text-transform: uppercase;
+        }
+
+        /* Agent Profile - 텍스트 크기 조정 */
+        .agent-profile {
+          text-align: center;
+        }
+
+        /* Briefing Content - 텍스트 가독성 향상 */
         .briefing-content {
-          line-height: 1.6;
+          line-height: 1.7;
         }
 
         .concept-text {
           color: #bbffdd;
-          font-size: 14px;
+          font-size: 15px;
           margin-bottom: 15px;
+          line-height: 1.7;
         }
 
         .inspiration-section {
           border-top: 1px solid rgba(0, 255, 140, 0.2);
           padding-top: 15px;
+          background: rgba(0, 12, 6, 0.3);
+          border-radius: 4px;
+          padding: 15px;
         }
 
         .inspiration-label {
@@ -1086,15 +1116,17 @@ export default function ResultsPage(): JSX.Element {
           font-size: 12px;
           font-weight: 700;
           margin-bottom: 8px;
+          letter-spacing: 1px;
         }
 
         .inspiration-text {
           color: #a7ffd8;
           font-size: 14px;
           font-style: italic;
+          line-height: 1.5;
         }
 
-        /* Level Selector */
+        /* Level Selector - 버튼 크기 조정 */
         .level-selector {
           display: flex;
           gap: 10px;
@@ -1106,16 +1138,19 @@ export default function ResultsPage(): JSX.Element {
           background: rgba(0, 12, 6, 0.4);
           border: 1px solid rgba(0, 255, 140, 0.3);
           color: #bbffdd;
-          padding: 8px 12px;
+          padding: 10px 14px;
           border-radius: 4px;
           cursor: pointer;
-          font-family: "Courier New", ui-monospace, SFMono-Regular, Menlo,
-            monospace;
+          font-family: inherit;
           font-weight: 600;
           font-size: 10px;
           text-transform: uppercase;
           letter-spacing: 1px;
-          min-width: 120px;
+          min-width: 110px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 3px;
           backdrop-filter: blur(2px);
           transition: all 0.3s ease;
           text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
@@ -1130,7 +1165,18 @@ export default function ResultsPage(): JSX.Element {
           box-shadow: 0 0 15px rgba(0, 255, 120, 0.3);
         }
 
-        /* Mission Details */
+        .level-number {
+          color: #bbffdd;
+          font-size: 12px;
+          font-weight: 800;
+        }
+
+        .level-name {
+          color: #a7ffd8;
+          font-size: 9px;
+        }
+
+        /* Mission Details - 텍스트 가독성 향상 */
         .mission-details {
           border-top: 1px solid rgba(0, 255, 140, 0.2);
           padding-top: 20px;
@@ -1159,6 +1205,7 @@ export default function ResultsPage(): JSX.Element {
           font-size: 10px;
           font-weight: 700;
           letter-spacing: 1px;
+          text-transform: uppercase;
         }
 
         .mission-info {
@@ -1167,56 +1214,31 @@ export default function ResultsPage(): JSX.Element {
 
         .info-row {
           display: flex;
-          margin-bottom: 8px;
-          align-items: flex-start;
+          flex-direction: column;
+          margin-bottom: 12px;
+          gap: 4px;
         }
 
         .info-label {
           color: #a7ffd8;
           font-size: 12px;
           font-weight: 700;
-          min-width: 80px;
-          margin-right: 10px;
+          text-transform: uppercase;
+          letter-spacing: 1px;
         }
 
         .info-value {
           color: #bbffdd;
-          font-size: 12px;
-          flex: 1;
+          font-size: 14px;
+          line-height: 1.5;
         }
 
-        .requirements-rewards {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 20px;
-        }
-
-        .requirements,
-        .rewards {
-          background: rgba(0, 12, 6, 0.3);
-          border: 1px solid rgba(0, 255, 140, 0.2);
-          border-radius: 4px;
-          padding: 15px;
-          backdrop-filter: blur(2px);
-        }
-
-        .req-header,
-        .reward-header {
+        .info-value.highlight {
           color: #bbffdd;
-          font-size: 11px;
           font-weight: 700;
-          margin-bottom: 10px;
-          letter-spacing: 1px;
         }
 
-        .req-item,
-        .reward-item {
-          color: #a7ffd8;
-          font-size: 11px;
-          margin-bottom: 5px;
-        }
-
-        /* Report Section */
+        /* Report Section - 텍스트 가독성 향상 */
         .report-section {
           border-top: 1px solid rgba(0, 255, 140, 0.2);
           padding-top: 20px;
@@ -1230,12 +1252,12 @@ export default function ResultsPage(): JSX.Element {
           border-radius: 4px;
           padding: 15px;
           color: #bbffdd;
-          font-family: "Courier New", ui-monospace, SFMono-Regular, Menlo,
-            monospace;
+          font-family: inherit;
           font-weight: 600;
-          font-size: 12px;
-          line-height: 1.5;
+          font-size: 13px;
+          line-height: 1.6;
           resize: vertical;
+          margin-bottom: 16px;
           backdrop-filter: blur(2px);
           text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
             0 0 20px rgba(0, 255, 100, 0.6), 2px 2px 2px #000000,
@@ -1273,10 +1295,10 @@ export default function ResultsPage(): JSX.Element {
           opacity: 0.8;
         }
 
-        /* Action Buttons */
+        /* Action Buttons - 크기 조정 */
         .action-buttons {
           display: flex;
-          gap: 15px;
+          gap: 10px;
           justify-content: center;
           margin-top: 20px;
         }
@@ -1285,16 +1307,15 @@ export default function ResultsPage(): JSX.Element {
           background: rgba(0, 12, 6, 0.6);
           border: 2px solid rgba(0, 255, 140, 0.4);
           color: #bbffdd;
-          padding: 12px 20px;
+          padding: 10px 16px;
           border-radius: 4px;
           cursor: pointer;
-          font-family: "Courier New", ui-monospace, SFMono-Regular, Menlo,
-            monospace;
+          font-family: inherit;
           font-weight: 600;
-          font-size: 11px;
+          font-size: 10px;
           letter-spacing: 1px;
           text-transform: uppercase;
-          min-width: 140px;
+          min-width: 100px;
           backdrop-filter: blur(3px);
           transition: all 0.3s ease;
           text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
@@ -1312,11 +1333,10 @@ export default function ResultsPage(): JSX.Element {
         .action-btn:not(:disabled):hover {
           border-color: rgba(0, 255, 140, 0.6);
           background: rgba(0, 12, 6, 0.8);
-          box-shadow: 0 0 25px rgba(0, 255, 120, 0.4);
-          transform: scale(1.02);
+          box-shadow: 0 0 20px rgba(0, 255, 120, 0.4);
         }
 
-        /* Control Section */
+        /* Control Section - 버튼 크기 조정 */
         .control-section {
           margin-top: 30px;
           padding-top: 20px;
@@ -1333,16 +1353,15 @@ export default function ResultsPage(): JSX.Element {
           background: rgba(0, 12, 6, 0.6);
           border: 2px solid rgba(0, 255, 140, 0.4);
           color: #bbffdd;
-          padding: 15px 25px;
+          padding: 12px 20px;
           border-radius: 4px;
           cursor: pointer;
-          font-family: "Courier New", ui-monospace, SFMono-Regular, Menlo,
-            monospace;
+          font-family: inherit;
           font-weight: 600;
-          font-size: 13px;
+          font-size: 11px;
           letter-spacing: 1px;
           text-transform: uppercase;
-          min-width: 180px;
+          min-width: 150px;
           backdrop-filter: blur(3px);
           transition: all 0.3s ease;
           text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
@@ -1354,13 +1373,61 @@ export default function ResultsPage(): JSX.Element {
           border-color: rgba(0, 255, 140, 0.6);
           background: rgba(0, 12, 6, 0.8);
           box-shadow: 0 0 25px rgba(0, 255, 120, 0.4);
-          transform: scale(1.02);
         }
 
-        /* 애니메이션들 */
+        /* Loading & Error States - 기존과 동일 */
+        .loading-display {
+          text-align: center;
+        }
+
+        .loading-icon {
+          font-size: 48px;
+          color: #bbffdd;
+          animation: spin 2s linear infinite;
+          margin-bottom: 20px;
+        }
+
+        .loading-text {
+          font-size: 18px;
+          color: #bbffdd;
+          margin-bottom: 10px;
+          letter-spacing: 2px;
+        }
+
+        .loading-subtext {
+          font-size: 14px;
+          color: #a7ffd8;
+          opacity: 0.8;
+        }
+
+        .error-display {
+          text-align: center;
+        }
+
+        .error-icon {
+          font-size: 48px;
+          color: #ff9d66;
+          text-shadow: 0 0 10px #ff9d66;
+          animation: pulse 1s infinite;
+          margin-bottom: 20px;
+        }
+
+        .error-text {
+          font-size: 16px;
+          color: #bbffdd;
+          margin-bottom: 20px;
+        }
+
+        /* 애니메이션들 - 기존과 동일 */
         @keyframes fall {
           to {
             transform: translateY(100vh);
+          }
+        }
+
+        @keyframes spin {
+          to {
+            transform: rotate(360deg);
           }
         }
 
@@ -1368,11 +1435,9 @@ export default function ResultsPage(): JSX.Element {
           0%,
           100% {
             opacity: 1;
-            transform: scale(1);
           }
           50% {
             opacity: 0.7;
-            transform: scale(1.1);
           }
         }
 
@@ -1392,8 +1457,8 @@ export default function ResultsPage(): JSX.Element {
           }
         }
 
-        /* 모바일 최적화 */
-        @media (max-width: 767px) {
+        /* 모바일 최적화 - 기존 구조 유지하면서 개선 */
+        @media (max-width: 768px) {
           .matrix-container {
             padding: 10px;
           }
@@ -1416,24 +1481,26 @@ export default function ResultsPage(): JSX.Element {
 
           .section-header {
             font-size: 13px;
-            padding: 10px;
+          }
+
+          .letter-section {
+            padding: 16px;
+          }
+
+          .letter-title {
+            font-size: 14px;
+          }
+
+          .letter-content {
+            font-size: 13px;
           }
 
           .agent-name {
             font-size: 16px;
           }
 
-          .agent-message {
-            font-size: 12px;
-          }
-
-          .briefing-content {
-            font-size: 12px;
-          }
-
-          .concept-text,
-          .inspiration-text {
-            font-size: 12px;
+          .concept-text {
+            font-size: 13px;
           }
 
           .level-selector {
@@ -1442,30 +1509,21 @@ export default function ResultsPage(): JSX.Element {
 
           .level-tab {
             min-width: auto;
-            font-size: 10px;
+            padding: 8px 12px;
           }
 
           .mission-header {
             flex-direction: column;
             align-items: flex-start;
-            gap: 10px;
+            gap: 8px;
           }
 
           .mission-title {
             font-size: 14px;
           }
 
-          .requirements-rewards {
-            grid-template-columns: 1fr;
-          }
-
           .info-value {
-            font-size: 11px;
-          }
-
-          .req-item,
-          .reward-item {
-            font-size: 10px;
+            font-size: 12px;
           }
 
           .report-textarea {
@@ -1478,24 +1536,17 @@ export default function ResultsPage(): JSX.Element {
           }
 
           .action-btn {
-            font-size: 10px;
-            padding: 12px 16px;
-          }
-
-          .control-actions {
-            gap: 10px;
+            font-size: 9px;
+            padding: 8px 12px;
           }
 
           .restart-btn {
-            font-size: 11px;
-            padding: 12px 16px;
-            min-width: 160px;
+            font-size: 10px;
+            padding: 10px 16px;
+            min-width: 120px;
           }
 
-          .quick-hint {
-            font-size: 9px;
-          }
-
+          .quick-hint,
           .transmission-status {
             font-size: 9px;
           }
@@ -1545,128 +1596,27 @@ export default function ResultsPage(): JSX.Element {
           }
         }
 
-        /* 태블릿 이상 */
-        @media (min-width: 768px) {
-          .crt-screen {
-            max-width: 1200px;
-            border: 12px solid rgba(0, 255, 140, 0.4);
-            border-radius: 15px;
-          }
-
-          .crt-content {
-            padding: 30px;
-            font-size: 16px;
-          }
-
-          .terminal-header {
-            font-size: 13px;
-          }
-
-          .section-header {
-            font-size: 16px;
-          }
-
-          .agent-name {
-            font-size: 20px;
-          }
-
-          .agent-message {
-            font-size: 15px;
-          }
-
-          .briefing-content {
-            font-size: 15px;
-          }
-
-          .concept-text,
-          .inspiration-text {
-            font-size: 15px;
+        @media (max-width: 480px) {
+          .status-line {
+            flex-direction: column;
+            gap: 8px;
+            font-size: 10px;
           }
 
           .action-buttons {
-            flex-direction: row;
-          }
-
-          .control-actions {
-            flex-direction: row;
-            justify-content: center;
-          }
-
-          .action-btn {
-            min-width: 160px;
-          }
-
-          .restart-btn {
-            min-width: 200px;
-          }
-
-          .report-footer {
-            flex-wrap: nowrap;
-          }
-
-          .connection-screen {
-            padding: 40px 30px;
-            margin: 30px 0;
-          }
-
-          .connection-title {
-            font-size: 14px;
-          }
-
-          .connection-animation {
-            margin: 40px 0;
-            gap: 8px;
-          }
-
-          .connection-nodes {
-            gap: 10px;
-          }
-
-          .node {
-            font-size: 24px;
-          }
-
-          .line {
-            font-size: 14px;
-          }
-
-          .connection-lines {
-            margin: 0 15px;
-            gap: 5px;
-          }
-
-          .status-text {
-            font-size: 16px;
-          }
-
-          .progress-container {
-            gap: 20px;
-            margin: 25px 0;
-          }
-
-          .progress-bar {
-            height: 18px;
-          }
-
-          .progress-percent {
-            font-size: 16px;
-            min-width: 50px;
+            flex-direction: column;
           }
         }
 
-        /* HomePage와 동일한 접근성 지원 */
+        /* 접근성 지원 - 기존과 동일 */
         @media (prefers-contrast: high) {
           .crt-screen {
             border-color: #00ffaa;
             background: #000;
           }
 
-          .crt-content,
-          .terminal-header,
           .section,
-          .connection-screen,
-          .requirements,
-          .rewards {
+          .letter-section {
             text-shadow: none;
             background: #000;
           }
@@ -1678,7 +1628,6 @@ export default function ResultsPage(): JSX.Element {
           }
         }
 
-        /* HomePage와 동일한 모션 감소 설정 */
         @media (prefers-reduced-motion: reduce) {
           * {
             animation-duration: 0.01ms !important;
@@ -1688,7 +1637,7 @@ export default function ResultsPage(): JSX.Element {
 
           .crt-flicker,
           .rain-char,
-          .node {
+          .loading-icon {
             animation: none !important;
             opacity: 1 !important;
           }
