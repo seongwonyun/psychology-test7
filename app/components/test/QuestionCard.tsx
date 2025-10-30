@@ -1,7 +1,6 @@
 "use client";
 
 import React from "react";
-import scale from "@/app/data/scale.json";
 
 interface Question {
   id: string;
@@ -15,36 +14,31 @@ interface QuestionCardProps {
   onChange: (v: number) => void;
 }
 
-export default function QuestionCard({
+export default function CyberpunkQuestionCard({
   question,
   value,
   onChange,
 }: QuestionCardProps) {
   if (!question) return null;
 
-  // ✅ 문항의 options가 있으면 그것을 사용, 없으면 scale.json을 사용
-  const options =
-    Array.isArray(question.options) && question.options.length > 0
-      ? question.options.map((label, i) => ({ value: i + 1, label }))
-      : (scale as { value: number; label: string }[]);
+  // ✅ 5단계 슬라이더로 고정
+  const options = [
+    { value: 1, label: "전혀 그렇지 않다" },
+    { value: 2, label: "그렇지 않다" },
+    { value: 3, label: "보통이다" },
+    { value: 4, label: "그렇다" },
+    { value: 5, label: "매우 그렇다" },
+  ];
 
-  // 키보드 단축키 (1-9, 0)
+  // 키보드 단축키 (1-5)
   React.useEffect(() => {
     const handleKeyPress = (e: KeyboardEvent) => {
       const key = e.key;
       const numKey = parseInt(key);
 
-      // 1-9 키 처리
-      if (numKey >= 1 && numKey <= 9 && numKey <= options.length) {
+      // 1-5 키 처리
+      if (numKey >= 1 && numKey <= 5) {
         const targetOption = options.find((opt) => opt.value === numKey);
-        if (targetOption) {
-          onChange(targetOption.value);
-        }
-      }
-
-      // 0 키로 10번째 옵션 선택 (있는 경우)
-      if (key === "0" && options.length >= 10) {
-        const targetOption = options.find((opt) => opt.value === 10);
         if (targetOption) {
           onChange(targetOption.value);
         }
@@ -56,62 +50,35 @@ export default function QuestionCard({
   }, [options, onChange]);
 
   return (
-    <div className="question-card crt-flicker">
-      {/* 터미널 헤더 - HomePage 스타일 적용 */}
-      <div className="question-header">
-        <div className="terminal-line">
-          <span className="terminal-prompt">user@psych-test:~$</span>
-          <span className="terminal-cursor crt-cursor">█</span>
-        </div>
-        <div className="question-id">
-          <span className="bracket">[</span>
-          <span className="id-text crt-text-glow">Q{question.id}</span>
-          <span className="bracket">]</span>
-          <span className="status crt-flicker-slow">AWAITING RESPONSE</span>
-        </div>
+    <div className="cyberpunk-question-card">
+      {/* 고정 크기 질문 텍스트 영역 */}
+      <div className="cyberpunk-question-content">
+        <div className="question-text crt-text-strong">{question.text}</div>
       </div>
 
-      {/* 질문 텍스트 - HomePage 스타일 강화 */}
-      <div className="question-content">
-        <div className="question-text crt-text-glow">{question.text}</div>
-      </div>
-
-      {/* 선택지 영역 - HomePage 스타일로 강화 */}
-      <div className="options-container">
-        <div className="options-header">
-          <span className="bracket">[</span>
-          <span className="options-label crt-text-glow">SELECT OPTION</span>
-          <span className="bracket">]</span>
-        </div>
-
-        {/* 가로형 슬라이더 - HomePage 스타일 적용 */}
+      {/* 고정 크기 선택지 영역 - 5단계 슬라이더 */}
+      <div className="cyberpunk-options-container">
         <div className="slider-container">
           {/* 양끝 라벨 */}
           <div className="slider-labels">
-            <div className="label-left crt-text-glow">전혀 그렇지 않다</div>
-            <div className="label-right crt-text-glow">매우 그렇다</div>
+            <div className="label-left crt-text-strong">전혀 그렇지 않다</div>
+            <div className="label-right crt-text-strong">매우 그렇다</div>
           </div>
 
           <div className="slider-track">
             {/* 연결선 */}
             <div className="slider-line" />
 
-            {/* 옵션 포인트들 */}
+            {/* 5단계 옵션 포인트들 */}
             {options.map((opt, index) => {
               const isSelected = value === opt.value;
-              const keyHint =
-                opt.value <= 9
-                  ? opt.value.toString()
-                  : opt.value === 10
-                  ? "0"
-                  : "";
 
               return (
                 <div
                   key={opt.value}
                   className="slider-point-container"
                   style={{
-                    left: `${(index / Math.max(options.length - 1, 1)) * 100}%`,
+                    left: `${(index / (options.length - 1)) * 100}%`,
                   }}
                 >
                   <label
@@ -131,7 +98,7 @@ export default function QuestionCard({
                       value={opt.value}
                       checked={isSelected}
                       onChange={() => onChange(opt.value)}
-                      aria-label={`${question.text} - 레벨 ${opt.value}`}
+                      aria-label={`${question.text} - 레벨 ${opt.value}: ${opt.label}`}
                     />
 
                     {/* 포인트 원형 */}
@@ -139,20 +106,6 @@ export default function QuestionCard({
                       <div className="point-inner" />
                       <div className="point-glow" />
                     </div>
-
-                    {/* 키보드 힌트 */}
-                    {keyHint && (
-                      <div className="key-hint">
-                        <span className="key-text">{keyHint}</span>
-                      </div>
-                    )}
-
-                    {/* 선택 상태 표시 */}
-                    {isSelected && (
-                      <div className="selection-indicator">
-                        <span className="indicator-text crt-text-glow">●</span>
-                      </div>
-                    )}
                   </label>
                 </div>
               );
@@ -162,189 +115,167 @@ export default function QuestionCard({
       </div>
 
       <style jsx>{`
-        /* HomePage와 정확히 동일한 스타일 적용 */
-        .question-card {
+        /* ─────────────── 사이버펑크 터미널 메인 카드 ─────────────── */
+        .cyberpunk-question-card {
           font-family: "Courier New", ui-monospace, SFMono-Regular, Menlo,
             monospace;
-          font-weight: 600;
           background: rgba(0, 12, 6, 0.6);
           border: 2px solid rgba(0, 255, 140, 0.4);
           border-radius: 8px;
-          padding: 20px;
-          margin: 0 auto;
-          max-width: 100%;
-          box-shadow: 0 0 30px rgba(0, 255, 120, 0.2),
-            inset 0 0 30px rgba(0, 60, 30, 0.2), 0 0 0 1px rgba(0, 0, 0, 0.6);
+          padding: 16px;
+          box-shadow: 0 0 30px rgba(0, 255, 120, 0.15),
+            inset 0 0 30px rgba(0, 60, 30, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.6);
           color: #bbffdd;
-          text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
-            0 0 20px rgba(0, 255, 100, 0.6), 2px 2px 2px #000000,
-            -1px -1px 1px #000000, 1px -1px 1px #000000, -1px 1px 1px #000000;
-          backdrop-filter: blur(3px);
-          position: relative;
+          backdrop-filter: blur(6px);
           overflow: hidden;
+          display: flex;
+          flex-direction: column;
+          box-sizing: border-box;
+
+          /* ✅ 모바일 우선 반응형 크기 설정 */
+          width: 90vw;
+          max-width: 320px;
+          height: 90vh;
+          max-height: 320px;
+          min-width: 280px;
+          min-height: 280px;
+
+          /* ✅ 중앙 정렬 - 일반적인 방법 */
+          margin: 0 auto;
+          position: relative;
+
+          /* 홈페이지 스타일 애니메이션 */
+          animation: crt-flicker 8s infinite;
         }
 
-        /* HomePage에서 가져온 CRT 효과 클래스들 */
-        .crt-text-glow {
+        /* ─────────────── 홈페이지 스타일 텍스트 클래스 ─────────────── */
+        .crt-text-strong {
+          color: #bbffdd !important;
           text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
-            0 0 20px rgba(0, 255, 100, 0.6), 2px 2px 2px #000000,
-            -1px -1px 1px #000000, 1px -1px 1px #000000, -1px 1px 1px #000000;
-        }
-
-        .crt-cursor {
-          animation: crt-cursor-blink 0.8s infinite;
-        }
-
-        .crt-flicker {
-          animation: crt-flicker 4s infinite ease-in-out;
-        }
-
-        .crt-flicker-slow {
-          animation: crt-flicker-slow 4s infinite ease-in-out;
-        }
-
-        .question-header {
-          margin-bottom: 20px;
-          border-bottom: 1px solid rgba(0, 255, 140, 0.2);
-          padding-bottom: 10px;
-          background: rgba(0, 12, 6, 0.4);
-          border: 1px solid rgba(0, 255, 140, 0.2);
-          border-radius: 4px;
-          padding: 10px;
-          backdrop-filter: blur(3px);
-        }
-
-        .terminal-line {
-          font-size: 11px;
-          color: #bbffdd;
-          margin-bottom: 5px;
+            0 0 20px rgba(0, 255, 100, 0.6), 2px 2px 3px #000000,
+            -2px -2px 2px #000000, 2px -2px 2px #000000, -2px 2px 2px #000000;
           font-weight: 600;
         }
 
-        .terminal-prompt {
-          color: #bbffdd;
-        }
-
-        .terminal-cursor {
+        .dim-note {
           color: #a7ffd8;
-          text-shadow: 0 0 8px rgba(0, 255, 160, 0.7), 2px 2px 2px #000000;
+          opacity: 0.9;
+          text-shadow: 0 0 2px #00ffaa, 0 0 6px #00ff88, 1px 1px 2px #000000,
+            -1px -1px 1px #000000;
         }
 
-        .question-id {
-          font-size: 12px;
+        /* ─────────────── 고정 크기 질문 영역 ─────────────── */
+        .cyberpunk-question-content {
+          background: rgba(0, 12, 6, 0.4);
+          border-radius: 4px;
+          padding: 12px;
+          border: 1px solid rgba(0, 255, 140, 0.2);
+          backdrop-filter: blur(3px);
+          margin-bottom: 12px;
+          /* ✅ 헤더 제거로 늘어난 높이 - 기존 85px + 헤더 영역 57px = 142px */
+          height: 142px;
+          min-height: 142px;
+          max-height: 142px;
+          flex-shrink: 0;
+          overflow-y: auto;
           display: flex;
           align-items: center;
-          gap: 8px;
-        }
-
-        .bracket {
-          color: #a7ffd8;
-          font-weight: 600;
-        }
-
-        .id-text {
-          color: #bbffdd;
-          font-weight: 900;
-          letter-spacing: 1px;
-        }
-
-        .status {
-          color: #ff9d66;
-          font-size: 10px;
-          margin-left: auto;
-        }
-
-        .question-content {
-          margin-bottom: 25px;
-          background: rgba(0, 12, 6, 0.4);
-          border-radius: 4px;
-          padding: 15px;
-          border: 1px solid rgba(0, 255, 140, 0.2);
-          backdrop-filter: blur(3px);
+          justify-content: center;
         }
 
         .question-text {
-          font-size: 16px;
-          line-height: 1.6;
-          color: #bbffdd;
+          font-size: 12px;
+          line-height: 1.4;
           text-align: center;
           font-weight: 600;
           word-break: keep-all;
           overflow-wrap: break-word;
           letter-spacing: 0.5px;
+          margin: 0;
+          padding: 0;
+          width: 100%;
         }
 
-        .options-container {
-          margin-top: 20px;
+        /* ─────────────── 고정 크기 옵션 영역 ─────────────── */
+        .cyberpunk-options-container {
           background: rgba(0, 12, 6, 0.4);
           border-radius: 4px;
-          padding: 15px;
+          padding: 12px;
           border: 1px solid rgba(0, 255, 140, 0.2);
           backdrop-filter: blur(3px);
-        }
-
-        .options-header {
+          /* ✅ 고정 높이 설정 - 남은 공간 모두 사용 */
+          flex: 1;
+          min-height: 0;
           display: flex;
-          align-items: center;
-          gap: 8px;
-          margin-bottom: 15px;
-          font-size: 12px;
-          justify-content: center;
+          flex-direction: column;
         }
 
-        .options-label {
-          color: #bbffdd;
-          font-weight: 700;
-          letter-spacing: 1px;
-          text-transform: uppercase;
-        }
-
-        /* 강화된 슬라이더 스타일 */
+        /* ─────────────── 5단계 슬라이더 ─────────────── */
         .slider-container {
-          margin: 40px 20px;
-          padding: 0 20px;
+          padding: 0 8px;
+          flex: 1;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
         }
 
         .slider-labels {
           display: flex;
           justify-content: space-between;
-          margin-bottom: 20px;
-          font-size: 11px;
-          color: #bbffdd;
+          margin-bottom: 15px;
+          /* 고정 높이 */
+          height: 20px;
+          min-height: 20px;
+          flex-shrink: 0;
         }
 
         .label-left,
         .label-right {
           font-weight: 600;
-          padding: 8px 12px;
+          padding: 4px 6px;
           background: rgba(0, 12, 6, 0.4);
           border: 1px solid rgba(0, 255, 140, 0.2);
           border-radius: 4px;
           backdrop-filter: blur(3px);
+          font-size: 9px;
+          letter-spacing: 0.5px;
+          /* 홈페이지 스타일 텍스트 */
+          color: #bbffdd;
+          text-shadow: 0 0 3px #00ffaa, 0 0 8px #00ff88,
+            0 0 20px rgba(0, 255, 100, 0.6), 2px 2px 3px #000000,
+            -2px -2px 2px #000000, 2px -2px 2px #000000, -2px 2px 2px #000000;
         }
 
         .slider-track {
           position: relative;
-          height: 60px;
+          /* ✅ 고정 높이 설정 */
+          height: 50px;
+          min-height: 50px;
+          max-height: 50px;
           width: 100%;
+          flex-shrink: 0;
+          display: flex;
+          align-items: center;
+          margin-bottom: 10px;
         }
 
         .slider-line {
           position: absolute;
-          top: 25px;
+          top: 50%;
           left: 0;
           right: 0;
           height: 4px;
           background: linear-gradient(
             90deg,
-            rgba(0, 255, 140, 0.2) 0%,
-            rgba(0, 255, 140, 0.4) 25%,
-            rgba(0, 255, 140, 0.6) 50%,
-            rgba(0, 255, 140, 0.4) 75%,
-            rgba(0, 255, 140, 0.2) 100%
+            rgba(255, 100, 100, 0.4) 0%,
+            rgba(255, 165, 0, 0.4) 25%,
+            rgba(255, 255, 0, 0.4) 50%,
+            rgba(144, 238, 144, 0.4) 75%,
+            rgba(0, 255, 140, 0.6) 100%
           );
           border-radius: 2px;
-          box-shadow: 0 0 6px rgba(0, 255, 140, 0.4);
+          box-shadow: 0 0 8px rgba(0, 255, 140, 0.3);
+          transform: translateY(-50%);
         }
 
         .slider-point-container {
@@ -365,7 +296,10 @@ export default function QuestionCard({
           flex-direction: column;
           align-items: center;
           justify-content: center;
-          margin-top: 15px;
+          height: 100%;
+          /* 터치 영역 확보 */
+          min-width: 50px;
+          min-height: 50px;
         }
 
         .slider-radio {
@@ -387,12 +321,12 @@ export default function QuestionCard({
           transition: all 0.3s ease;
           z-index: 2;
           backdrop-filter: blur(3px);
-          box-shadow: inset 0 0 10px rgba(0, 60, 30, 0.2);
+          box-shadow: inset 0 0 15px rgba(0, 60, 30, 0.2);
         }
 
         .point-inner {
-          width: 6px;
-          height: 6px;
+          width: 5px;
+          height: 5px;
           background: rgba(0, 255, 140, 0.3);
           border-radius: 50%;
           opacity: 0.5;
@@ -415,48 +349,12 @@ export default function QuestionCard({
           transition: opacity 0.3s ease;
         }
 
-        .key-hint {
-          position: absolute;
-          bottom: -20px;
-          left: 50%;
-          transform: translateX(-50%);
-          font-size: 9px;
-          color: #bbffdd;
-          background: rgba(0, 12, 6, 0.4);
-          border: 1px solid rgba(0, 255, 140, 0.2);
-          border-radius: 4px;
-          padding: 2px 6px;
-          text-shadow: 0 0 3px #00ffaa, 1px 1px 1px #000000;
-          opacity: 0.8;
-          backdrop-filter: blur(3px);
-        }
-
-        .key-text {
-          color: #bbffdd;
-          font-weight: 600;
-        }
-
-        .selection-indicator {
-          position: absolute;
-          top: -15px;
-          left: 50%;
-          transform: translateX(-50%);
-          font-size: 12px;
-          z-index: 3;
-          animation: pulse 2s infinite;
-        }
-
-        .indicator-text {
-          color: #bbffdd;
-          text-shadow: 0 0 8px #00ffaa, 0 0 15px #cccc00;
-        }
-
-        /* 호버/포커스 효과 - HomePage와 동일한 색상 */
+        /* ─────────────── 호버/포커스 효과 ─────────────── */
         .slider-point:hover .point-circle,
         .slider-point:focus .point-circle {
-          border-color: rgba(0, 255, 140, 0.6);
-          background: rgba(0, 12, 6, 0.7);
-          box-shadow: 0 0 12px rgba(0, 100, 0, 0.6);
+          border-color: rgba(0, 255, 140, 0.8);
+          background: rgba(0, 12, 6, 0.8);
+          box-shadow: 0 0 15px rgba(0, 200, 0, 0.6);
           transform: scale(1.1);
         }
 
@@ -468,39 +366,81 @@ export default function QuestionCard({
         .slider-point:hover .point-inner,
         .slider-point:focus .point-inner {
           opacity: 0.8;
+          background: rgba(0, 255, 140, 0.6);
         }
 
-        /* 선택된 상태 - HomePage와 동일한 색상 */
+        /* ─────────────── 선택된 상태 ─────────────── */
         .slider-point.selected .point-circle {
-          border-color: rgba(0, 255, 140, 0.8);
-          background: rgba(0, 12, 6, 0.8);
-          box-shadow: 0 0 18px rgba(0, 200, 0, 0.8),
-            0 0 30px rgba(0, 150, 0, 0.4);
-          transform: scale(1.15);
+          border-color: rgba(0, 255, 140, 1);
+          background: rgba(0, 12, 6, 0.9);
+          box-shadow: 0 0 25px rgba(0, 255, 0, 0.8),
+            0 0 40px rgba(0, 200, 0, 0.4);
+          transform: scale(1.2);
         }
 
         .slider-point.selected .point-inner {
           opacity: 1;
           background: #bbffdd;
-          box-shadow: 0 0 10px #00ffaa;
+          box-shadow: 0 0 15px #00ffaa;
+          transform: scale(1.2);
         }
 
         .slider-point.selected .point-glow {
           opacity: 1;
         }
 
-        /* HomePage에서 가져온 애니메이션들 */
-        @keyframes crt-cursor-blink {
-          0%,
-          50% {
-            opacity: 1;
-          }
-          51%,
-          100% {
-            opacity: 0;
-          }
+        /* ─────────────── 5단계별 색상 차별화 ─────────────── */
+        .slider-point-container:nth-child(1) .point-circle {
+          border-color: rgba(255, 100, 100, 0.6);
+        }
+        .slider-point-container:nth-child(1)
+          .slider-point.selected
+          .point-circle {
+          border-color: rgba(255, 100, 100, 1);
+          box-shadow: 0 0 25px rgba(255, 100, 100, 0.8);
         }
 
+        .slider-point-container:nth-child(2) .point-circle {
+          border-color: rgba(255, 165, 0, 0.6);
+        }
+        .slider-point-container:nth-child(2)
+          .slider-point.selected
+          .point-circle {
+          border-color: rgba(255, 165, 0, 1);
+          box-shadow: 0 0 25px rgba(255, 165, 0, 0.8);
+        }
+
+        .slider-point-container:nth-child(3) .point-circle {
+          border-color: rgba(255, 255, 0, 0.6);
+        }
+        .slider-point-container:nth-child(3)
+          .slider-point.selected
+          .point-circle {
+          border-color: rgba(255, 255, 0, 1);
+          box-shadow: 0 0 25px rgba(255, 255, 0, 0.8);
+        }
+
+        .slider-point-container:nth-child(4) .point-circle {
+          border-color: rgba(144, 238, 144, 0.6);
+        }
+        .slider-point-container:nth-child(4)
+          .slider-point.selected
+          .point-circle {
+          border-color: rgba(144, 238, 144, 1);
+          box-shadow: 0 0 25px rgba(144, 238, 144, 0.8);
+        }
+
+        .slider-point-container:nth-child(5) .point-circle {
+          border-color: rgba(0, 255, 140, 0.6);
+        }
+        .slider-point-container:nth-child(5)
+          .slider-point.selected
+          .point-circle {
+          border-color: rgba(0, 255, 140, 1);
+          box-shadow: 0 0 25px rgba(0, 255, 140, 0.8);
+        }
+
+        /* ─────────────── CRT 애니메이션 (홈페이지 스타일) ─────────────── */
         @keyframes crt-flicker {
           0%,
           95%,
@@ -527,51 +467,225 @@ export default function QuestionCard({
           }
         }
 
-        @keyframes pulse {
-          0% {
-            opacity: 1;
-            transform: translateX(-50%) scale(1);
-          }
-          50% {
-            opacity: 0.7;
-            transform: translateX(-50%) scale(1.2);
-          }
-          100% {
-            opacity: 1;
-            transform: translateX(-50%) scale(1);
-          }
+        /* ─────────────── 스크롤바 스타일링 ─────────────── */
+        .cyberpunk-question-content::-webkit-scrollbar {
+          width: 4px;
         }
 
-        /* 모바일 최적화 - HomePage 스타일 적용 */
-        @media (max-width: 767px) {
-          .question-card {
-            padding: max(16px, env(safe-area-inset-top, 0)) 16px
-              max(16px, env(safe-area-inset-bottom, 0));
-            max-width: 95vw;
-            margin: 0 auto;
+        .cyberpunk-question-content::-webkit-scrollbar-track {
+          background: rgba(0, 12, 6, 0.3);
+          border-radius: 2px;
+        }
+
+        .cyberpunk-question-content::-webkit-scrollbar-thumb {
+          background: rgba(0, 255, 140, 0.3);
+          border-radius: 2px;
+        }
+
+        .cyberpunk-question-content::-webkit-scrollbar-thumb:hover {
+          background: rgba(0, 255, 140, 0.5);
+        }
+
+        /* ─────────────── 반응형 디자인 (모바일 우선) ─────────────── */
+
+        /* 태블릿 이상 */
+        @media (min-width: 768px) {
+          .cyberpunk-question-card {
+            padding: 20px;
+            border-radius: 12px;
+            /* ✅ 태블릿 반응형 크기 */
+            width: 80vw;
+            max-width: 450px;
+            height: 80vh;
+            max-height: 400px;
+            min-width: 400px;
+            min-height: 350px;
+          }
+
+          .cyberpunk-question-content {
+            height: 165px;
+            min-height: 165px;
+            max-height: 165px;
+            padding: 15px;
+            margin-bottom: 15px;
           }
 
           .question-text {
             font-size: 14px;
+            line-height: 1.5;
+          }
+
+          .cyberpunk-options-container {
+            padding: 15px;
           }
 
           .slider-container {
-            margin: 30px 10px;
-            padding: 0 10px;
-          }
-
-          .slider-labels {
-            font-size: 10px;
-            margin-bottom: 15px;
+            padding: 0 15px;
           }
 
           .slider-track {
-            height: 50px;
+            height: 70px;
+            min-height: 70px;
+            max-height: 70px;
+            margin-bottom: 15px;
+          }
+
+          .slider-labels {
+            height: 25px;
+            min-height: 25px;
+            margin-bottom: 20px;
+          }
+
+          .label-left,
+          .label-right {
+            font-size: 10px;
+            padding: 6px 8px;
           }
 
           .point-circle {
-            width: 14px;
-            height: 14px;
+            width: 22px;
+            height: 22px;
+            border-width: 3px;
+          }
+
+          .point-inner {
+            width: 7px;
+            height: 7px;
+          }
+
+          .slider-point {
+            min-width: 55px;
+            min-height: 55px;
+          }
+        }
+
+        /* 데스크톱 */
+        @media (min-width: 1024px) {
+          .cyberpunk-question-card {
+            padding: 25px;
+            /* ✅ 데스크톱 반응형 크기 */
+            width: 70vw;
+            max-width: 550px;
+            height: 70vh;
+            max-height: 480px;
+            min-width: 500px;
+            min-height: 420px;
+          }
+
+          .cyberpunk-question-content {
+            height: 200px;
+            min-height: 200px;
+            max-height: 200px;
+            padding: 20px;
+            margin-bottom: 18px;
+          }
+
+          .question-text {
+            font-size: 16px;
+            letter-spacing: 1px;
+          }
+
+          .cyberpunk-options-container {
+            padding: 20px;
+          }
+
+          .slider-container {
+            padding: 0 25px;
+          }
+
+          .slider-track {
+            height: 90px;
+            min-height: 90px;
+            max-height: 90px;
+            margin-bottom: 20px;
+          }
+
+          .slider-labels {
+            height: 30px;
+            min-height: 30px;
+            margin-bottom: 25px;
+          }
+
+          .label-left,
+          .label-right {
+            font-size: 11px;
+            padding: 8px 10px;
+            letter-spacing: 1px;
+          }
+
+          .point-circle {
+            width: 26px;
+            height: 26px;
+            border-width: 3px;
+          }
+
+          .point-inner {
+            width: 9px;
+            height: 9px;
+          }
+
+          .slider-point {
+            min-width: 60px;
+            min-height: 60px;
+          }
+        }
+
+        /* ─────────────── 초소형 모바일 (360px 이하) ─────────────── */
+        @media (max-width: 360px) {
+          .cyberpunk-question-card {
+            padding: 12px;
+            /* ✅ 초소형 모바일 반응형 크기 */
+            width: 95vw;
+            max-width: 290px;
+            height: 85vh;
+            max-height: 290px;
+            min-width: 260px;
+            min-height: 260px;
+          }
+
+          .cyberpunk-question-content {
+            height: 127px;
+            min-height: 127px;
+            max-height: 127px;
+            padding: 10px;
+            margin-bottom: 10px;
+          }
+
+          .question-text {
+            font-size: 11px;
+            line-height: 1.3;
+          }
+
+          .cyberpunk-options-container {
+            padding: 10px;
+          }
+
+          .slider-container {
+            padding: 0 5px;
+          }
+
+          .slider-track {
+            height: 45px;
+            min-height: 45px;
+            max-height: 45px;
+            margin-bottom: 8px;
+          }
+
+          .slider-labels {
+            height: 18px;
+            min-height: 18px;
+            margin-bottom: 12px;
+          }
+
+          .label-left,
+          .label-right {
+            font-size: 8px;
+            padding: 3px 4px;
+          }
+
+          .point-circle {
+            width: 16px;
+            height: 16px;
           }
 
           .point-inner {
@@ -579,95 +693,83 @@ export default function QuestionCard({
             height: 4px;
           }
 
-          .key-hint {
-            font-size: 8px;
-            bottom: -18px;
-          }
-
-          /* iOS 터치 최적화 */
           .slider-point {
-            min-height: 44px;
-            min-width: 44px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+            min-width: 45px;
+            min-height: 45px;
           }
         }
 
-        /* 태블릿 및 데스크톱 최적화 */
-        @media (min-width: 768px) {
-          .question-card {
-            padding: 30px;
-            border-radius: 12px;
-            max-width: 4xl;
+        /* ─────────────── 가로 모드 최적화 ─────────────── */
+        @media (orientation: landscape) and (max-height: 600px) {
+          .cyberpunk-question-card {
+            /* ✅ 가로 모드 반응형 크기 */
+            width: 80vw;
+            max-width: 400px;
+            height: 90vh;
+            max-height: 250px;
+            min-width: 350px;
+            min-height: 220px;
+            padding: 10px;
+          }
+
+          .cyberpunk-question-content {
+            height: 95px;
+            min-height: 95px;
+            max-height: 95px;
+            padding: 8px;
+            margin-bottom: 8px;
           }
 
           .question-text {
-            font-size: 18px;
+            font-size: 11px;
+            line-height: 1.2;
           }
 
-          .slider-container {
-            margin: 50px 30px;
-            padding: 0 30px;
+          .cyberpunk-options-container {
+            padding: 8px;
           }
 
           .slider-track {
-            height: 80px;
+            height: 40px;
+            min-height: 40px;
+            max-height: 40px;
+            margin-bottom: 5px;
           }
 
-          .point-circle {
-            width: 22px;
-            height: 22px;
-          }
-
-          .point-inner {
-            width: 8px;
-            height: 8px;
-          }
-        }
-
-        @media (min-width: 1024px) {
-          .question-text {
-            font-size: 20px;
-          }
-
-          .slider-container {
-            margin: 60px 50px;
-            padding: 0 50px;
-          }
-
-          .point-circle {
-            width: 26px;
-            height: 26px;
-          }
-
-          .point-inner {
-            width: 10px;
-            height: 10px;
+          .slider-labels {
+            height: 15px;
+            min-height: 15px;
+            margin-bottom: 10px;
           }
         }
 
-        /* 접근성 및 사용자 환경 설정 */
+        /* ─────────────── 접근성 및 사용자 환경 설정 ─────────────── */
         @media (prefers-contrast: high) {
-          .question-card {
+          .cyberpunk-question-card {
             border-width: 3px;
             border-color: #00ffaa;
             background: #000;
+          }
+
+          .cyberpunk-question-content,
+          .cyberpunk-options-container {
+            border-color: #00ffaa;
+            background: rgba(0, 0, 0, 0.8);
           }
 
           .point-glow {
             display: none;
           }
 
-          .crt-text-glow,
+          .crt-text-strong,
+          .dim-note,
           .question-text,
           .label-left,
           .label-right {
             text-shadow: none;
           }
 
-          .crt-input:focus,
-          .crt-text-glow-hover:focus {
+          .slider-point:focus {
             box-shadow: 0 0 0 3px #00ffbf;
           }
         }
@@ -680,21 +782,34 @@ export default function QuestionCard({
           }
 
           .crt-flicker,
-          .crt-flicker-slow,
-          .crt-cursor {
+          .crt-flicker-slow {
             animation: none !important;
             opacity: 1 !important;
           }
         }
 
-        /* 터치 디바이스 최적화 */
+        /* ─────────────── 터치 디바이스 최적화 ─────────────── */
         @media (hover: none) and (pointer: coarse) {
-          .slider-point:hover {
-            /* 터치 디바이스에서는 hover 효과 제거 */
+          .slider-point {
+            /* 터치 디바이스에서 충분한 터치 영역 확보 */
+            min-width: 55px;
+            min-height: 55px;
           }
 
           .slider-point:active .point-circle {
-            transform: scale(0.95);
+            transform: scale(0.9);
+            background: rgba(0, 12, 6, 0.9);
+          }
+
+          .slider-point:active .point-inner {
+            opacity: 1;
+            background: rgba(0, 255, 140, 0.8);
+          }
+
+          /* 터치 하이라이트 제거 */
+          .cyberpunk-question-card,
+          .slider-point {
+            -webkit-tap-highlight-color: transparent;
           }
         }
       `}</style>
