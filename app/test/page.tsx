@@ -123,7 +123,7 @@ export default function TestPage() {
   }
 
   return (
-    <main className="fixed inset-0 w-full h-screen overflow-hidden bg-black font-mono crt-screen crt-flicker">
+    <main className="min-h-screen w-full overflow-y-auto bg-black font-mono crt-screen crt-flicker">
       {/* 매트릭스 배경 */}
       <MatrixRain />
 
