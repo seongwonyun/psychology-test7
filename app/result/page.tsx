@@ -805,13 +805,13 @@ export default function RefinedResultsPage(): JSX.Element {
           )}
 
           {/* Controls */}
-          <div className="control-section">
+          {/* <div className="control-section">
             <div className="control-actions">
               <button className="restart-btn" onClick={handleRestart}>
                 다시 시작하기
               </button>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
 
