@@ -576,51 +576,51 @@ export default function RefinedResultsPage(): JSX.Element {
             </div>
           </div>
 
-          {/* 처방전 요약 */}
-          <div className="section">
-            <div className="section-header crt-text-glow">
-              [PRESCRIPTION SUMMARY] - CODE: {prescription.code}
-            </div>
-            <div className="mission-details">
-              <div className="mission-header">
-                <div className="mission-title crt-text-glow">
-                  {prescription.name || prescription.code}
-                </div>
-                <div className="difficulty-badge">PROFILE</div>
+          {/* 처방전 요약
+          {currentStep >= 0 && (
+            <div className="prescription-summary">
+              <div className="summary-header crt-text-glow">
+                [PRESCRIPTION SUMMARY] - CODE: {prescription.code}
               </div>
-              <div className="mission-info">
-                <div className="info-row">
-                  <span className="info-label">DEAR:</span>
-                  <span className="info-value crt-text-glow">
-                    {prescription.dear || "-"}
-                  </span>
+              <div className="mission-details">
+                <div className="mission-header">
+                  <div className="mission-title crt-text-glow">
+                    {prescription.name || prescription.code}
+                  </div>
+                  <div className="difficulty-badge">PROFILE</div>
                 </div>
-                <div className="info-row">
-                  <span className="info-label">CONCEPT:</span>
-                  <span className="info-value crt-text-glow">
-                    {prescription.concept || "-"}
-                  </span>
-                </div>
-                <div className="info-row">
-                  <span className="info-label">MOVIE:</span>
-                  <span className="info-value crt-text-glow">
-                    {prescription.movie || "-"}
-                  </span>
+                <div className="mission-info">
+                  <div className="info-row">
+                    <span className="info-label">DEAR:</span>
+                    <span className="info-value crt-text-glow">
+                      {prescription.dear || "-"}
+                    </span>
+                  </div>
+                  <div className="info-row">
+                    <span className="info-label">CONCEPT:</span>
+                    <span className="info-value crt-text-glow">
+                      {prescription.concept || "-"}
+                    </span>
+                  </div>
+                  <div className="info-row">
+                    <span className="info-label">MOVIE:</span>
+                    <span className="info-value crt-text-glow">
+                      {prescription.movie || "-"}
+                    </span>
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
+          )} */}
 
           {/* Letter */}
           {currentStep >= 1 && (
             <div className="letter-section">
-              <div className="letter-title crt-text-glow">
-                📧 PERSONAL MESSAGE
-              </div>
               <div className="letter-content">
                 <div className="agent-profile-inline">
                   <div className="profile-label crt-text-glow">
-                    [AGENT PROFILE] - CLEARANCE LEVEL: CLASSIFIED
+                    <strong>AGENT DESIGNATION</strong>
+                    <br></br>에이전트 코드 네임
                   </div>
                   <div className="agent-name crt-text-glow">
                     {prescription.name}
@@ -677,19 +677,22 @@ export default function RefinedResultsPage(): JSX.Element {
           {/* Briefing */}
           {currentStep >= 2 && (
             <div className="section">
-              <div className="section-header crt-text-glow">
-                [MISSION BRIEFING] - OPERATION: NEURAL ENHANCEMENT
+              <div className="section-header crt-text-glow text-center">
+                [나를 위한 작은 여행]
               </div>
-              <div className="briefing-content">
-                <div className="concept-text crt-text-glow">
+
+              <div className="briefing-content text-center">
+                <div className="concept-text crt-text-glow inline-block">
                   {prescription.concept}
                 </div>
+                <br />
+
                 {prescription.movie && (
-                  <div className="inspiration-section">
-                    <div className="inspiration-label crt-text-glow">
-                      INSPIRATION PROTOCOL:
+                  <div className="inspiration-section mt-4">
+                    <div className="inspiration-label crt-text-glow text-sm opacity-80 mb-1">
+                      <strong>추천영화</strong>
                     </div>
-                    <div className="inspiration-text">
+                    <div className="inspiration-text crt-text-glow">
                       "{prescription.movie}"
                     </div>
                   </div>
@@ -702,7 +705,7 @@ export default function RefinedResultsPage(): JSX.Element {
           {currentStep >= 3 && (
             <div className="section">
               <div className="section-header crt-text-glow">
-                [TACTICAL PROTOCOLS] - SELECT MISSION LEVEL
+                미션의 레벨을 선택하여 도전해보세요.
               </div>
 
               <div className="level-selector">
@@ -714,7 +717,7 @@ export default function RefinedResultsPage(): JSX.Element {
                     }`}
                     onClick={() => setSelectedMission(mission.level)}
                   >
-                    <span className="level-number">LV.{mission.level}</span>
+                    <span className="level-number">레벨LV.{mission.level}</span>
                     <span className="level-name">{mission.title}</span>
                   </button>
                 ))}
@@ -730,21 +733,21 @@ export default function RefinedResultsPage(): JSX.Element {
                   </div>
                 </div>
 
-                <div className="mission-info">
+                <div className="mission-info text-center">
                   <div className="info-row">
-                    <span className="info-label">CONCEPT:</span>
+                    <span className="info-label text-center">CONCEPT:</span>
                     <span className="info-value crt-text-glow">
                       {currentMission.concept}
                     </span>
                   </div>
-                  <div className="info-row">
-                    <span className="info-label">KEYWORD:</span>
+                  <div className="info-row text-center">
+                    <span className="info-label text-center">KEYWORD:</span>
                     <span className="info-value highlight crt-text-glow">
                       {currentMission.keyword}
                     </span>
                   </div>
-                  <div className="info-row">
-                    <span className="info-label">ACTIVITY:</span>
+                  <div className="info-row text-center">
+                    <span className="info-label text-center">ACTIVITY:</span>
                     <span className="info-value crt-text-glow">
                       {currentMission.activity}
                     </span>
@@ -758,21 +761,24 @@ export default function RefinedResultsPage(): JSX.Element {
           {currentStep >= 4 && (
             <div className="section">
               <div className="section-header crt-text-glow">
-                [MISSION REPORT] - FIELD TRANSMISSION
+                테스트를 통한 경험이 어떠셨나요?
               </div>
 
               <div className="report-section">
                 <textarea
                   className="report-textarea"
-                  placeholder="ENTER MISSION STATUS REPORT..."
+                  placeholder="데모에 참가해 주셔서 감사합니다. 이번 경험에 대한 소감을 자유롭게 작성해 주세요..."
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   onKeyDown={onCommentKeyDown}
                 />
 
                 <div className="report-footer">
-                  <div className="quick-hint">
-                    💡 Ctrl+Enter: Quick Transmission
+                  <div className="quick-hint ">
+                    - 다음의 리뷰는 정식오픈에 반영될 수 있습니다.<br></br>
+                    <br></br>- 본 테스트는 현재의 상태를 통한 여행을 처방해주는
+                    시스템입니다. 심리학적 근거를 기반하여 제작되었으나, 의학적
+                    책임은 없음을 알려드립니다.
                   </div>
                   {lastSentAt && (
                     <div className="transmission-status">
@@ -783,18 +789,11 @@ export default function RefinedResultsPage(): JSX.Element {
 
                 <div className="action-buttons">
                   <button
-                    className="action-btn save-btn"
-                    onClick={handleSave}
-                    disabled={saving || !commentText.trim() || !resultId}
-                  >
-                    {saving ? "💾 SAVING..." : "💾 SAVE"}
-                  </button>
-                  <button
                     className="action-btn send-btn"
                     onClick={handleSendComment}
                     disabled={sending || !commentText.trim() || !resultId}
                   >
-                    {sending ? "📡 SENDING..." : "📡 SEND REPORT"}
+                    {sending ? "리뷰 보내기" : "리뷰 보내기"}
                   </button>
                 </div>
               </div>
@@ -805,7 +804,7 @@ export default function RefinedResultsPage(): JSX.Element {
           <div className="control-section">
             <div className="control-actions">
               <button className="restart-btn" onClick={handleRestart}>
-                🔄 NEW MISSION
+                다시 시작하기
               </button>
             </div>
           </div>
