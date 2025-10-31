@@ -705,6 +705,10 @@ export default function RefinedResultsPage(): JSX.Element {
           {currentStep >= 3 && (
             <div className="section">
               <div className="section-header crt-text-glow">
+                <div className="agent-name crt-text-glow">
+                  {prescription.dear}
+                  <br></br> <br></br>
+                </div>
                 미션의 레벨을 선택하여 도전해보세요.
               </div>
 
