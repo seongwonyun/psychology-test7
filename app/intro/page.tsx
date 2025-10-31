@@ -257,9 +257,13 @@ export default function HomePage(): JSX.Element {
 
     resetAll();
     sessionStorage.setItem("nickname", trimmed);
-
-    setStage("permaTest");
-    router.push("/test");
+    // ✅ admin 계정 분기
+    if (trimmed.toLowerCase() === "admin1004") {
+      router.push("/admin");
+    } else {
+      setStage("permaTest");
+      router.push("/test");
+    }
   }
 
   function handleKeyPress(e: KeyboardEvent<HTMLInputElement>): void {
