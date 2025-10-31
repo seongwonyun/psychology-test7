@@ -1,11 +1,21 @@
 "use client";
 
-import React, { JSX, useEffect, useMemo, useRef, useState } from "react";
+import React, {
+  JSX,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  Suspense, // [2025-10-31] 추가: Suspense로 감싸기 위함
+} from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 /** zustand persist에 사용한 세션스토리지 키 */
 const STORAGE_KEY = "mx:psych:v1:state";
 
+/* ===========================
+   타입 선언부 (그대로 유지)
+   =========================== */
 interface PrescriptionData {
   id: number;
   code: string;
@@ -36,7 +46,23 @@ interface MissionLevel {
   rewards: string[];
 }
 
+/* ==========================================================================================
+   [2025-10-31] 추가: 파일 분리 없이 에러 해결
+   - 문제: Next.js 16에서는 useSearchParams()를 Suspense 경계 안에서만 사용 가능
+   - 방법: 동일 파일 내에서 부모 컴포넌트 → 자식 컴포넌트로 분리하고, 부모가 <Suspense>로 감싸기
+   ========================================================================================== */
+
+/** 부모 컴포넌트: Suspense 경계 제공 (빌드 에러 해결 포인트) */
 export default function RefinedResultsPage(): JSX.Element {
+  return (
+    <Suspense fallback={<div className="p-8 text-zinc-500">결과 로딩 중…</div>}>
+      <ResultContent /> {/* ✅ 여기 안에서만 useSearchParams 사용 */}
+    </Suspense>
+  );
+}
+
+/** 자식 컴포넌트: 기존의 모든 로직/훅/렌더링을 이동 */
+function ResultContent(): JSX.Element {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -576,43 +602,6 @@ export default function RefinedResultsPage(): JSX.Element {
             </div>
           </div>
 
-          {/* 처방전 요약
-          {currentStep >= 0 && (
-            <div className="prescription-summary">
-              <div className="summary-header crt-text-glow">
-                [PRESCRIPTION SUMMARY] - CODE: {prescription.code}
-              </div>
-              <div className="mission-details">
-                <div className="mission-header">
-                  <div className="mission-title crt-text-glow">
-                    {prescription.name || prescription.code}
-                  </div>
-                  <div className="difficulty-badge">PROFILE</div>
-                </div>
-                <div className="mission-info">
-                  <div className="info-row">
-                    <span className="info-label">DEAR:</span>
-                    <span className="info-value crt-text-glow">
-                      {prescription.dear || "-"}
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">CONCEPT:</span>
-                    <span className="info-value crt-text-glow">
-                      {prescription.concept || "-"}
-                    </span>
-                  </div>
-                  <div className="info-row">
-                    <span className="info-label">MOVIE:</span>
-                    <span className="info-value crt-text-glow">
-                      {prescription.movie || "-"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )} */}
-
           {/* Letter */}
           {currentStep >= 1 && (
             <div className="letter-section">
@@ -620,7 +609,8 @@ export default function RefinedResultsPage(): JSX.Element {
                 <div className="agent-profile-inline">
                   <div className="profile-label crt-text-glow">
                     <strong>AGENT DESIGNATION</strong>
-                    <br></br>에이전트 코드 네임
+                    <br />
+                    에이전트 코드 네임
                   </div>
                   <div className="agent-name crt-text-glow">
                     {prescription.name}
@@ -707,7 +697,8 @@ export default function RefinedResultsPage(): JSX.Element {
               <div className="section-header crt-text-glow">
                 <div className="agent-name crt-text-glow">
                   {prescription.dear}
-                  <br></br> <br></br>
+                  <br />
+                  <br />
                 </div>
                 미션의 레벨을 선택하여 도전해보세요.
               </div>
@@ -779,8 +770,9 @@ export default function RefinedResultsPage(): JSX.Element {
 
                 <div className="report-footer">
                   <div className="quick-hint ">
-                    - 다음의 리뷰는 정식오픈에 반영될 수 있습니다.<br></br>
-                    <br></br>- 본 테스트는 현재의 상태를 통한 여행을 처방해주는
+                    - 다음의 리뷰는 정식오픈에 반영될 수 있습니다.
+                    <br />
+                    <br />- 본 테스트는 현재의 상태를 통한 여행을 처방해주는
                     시스템입니다. 심리학적 근거를 기반하여 제작되었으나, 의학적
                     책임은 없음을 알려드립니다.
                   </div>
@@ -804,14 +796,15 @@ export default function RefinedResultsPage(): JSX.Element {
             </div>
           )}
 
-          {/* Controls */}
-          {/* <div className="control-section">
+          {/* Controls (옵션)
+          <div className="control-section">
             <div className="control-actions">
               <button className="restart-btn" onClick={handleRestart}>
                 다시 시작하기
               </button>
             </div>
-          </div> */}
+          </div>
+          */}
         </div>
       </div>
 
@@ -820,7 +813,7 @@ export default function RefinedResultsPage(): JSX.Element {
   );
 }
 
-/** 최종 스타일 */
+/** 최종 스타일 (그대로 유지) */
 const styles = `
 /* (생략 없이 기존 styles 그대로) */
 .matrix-container {

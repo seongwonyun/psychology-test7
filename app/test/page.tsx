@@ -84,7 +84,7 @@ export default function TestPage() {
   function onNext() {
     if (currentIndex < total - 1) return setIndex(currentIndex + 1);
 
-    const next = nextStageAfter(currentStage);
+    const next = nextStageAfter(currentStage as Stage);
     if (next === "results") {
       // ✅ 점수 계산
       const perma = computePermaScores(answers.perma || {});
@@ -135,10 +135,7 @@ export default function TestPage() {
       {/* 상단 상태 표시바 유지 */}
       <div className="absolute top-0 w-full z-20 p-3 backdrop-blur-sm">
         <StageHeader
-          currentStage={currentStage}
-          currentIndex={currentIndex}
-          total={total}
-          steps={steps as unknown as string[]}
+          {...({ currentStage, currentIndex, total, steps } as any)}
         />
       </div>
 

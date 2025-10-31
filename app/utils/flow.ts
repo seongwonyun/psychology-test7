@@ -1,4 +1,4 @@
-// src/app/utils/flow.tsx
+// src/app/utils/flow.ts
 
 /** 가능한 스테이지 타입 정의 */
 export type Stage = "intro" | "permaTest" | "unconsciousTest" | "results";

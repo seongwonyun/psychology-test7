@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  // output   = "../src/generated"
 }
 
 datasource db {
@@ -38,4 +37,23 @@ model results {
   code       String?
   nickname   String?
   comment    String?
+}
+
+model PRESCRIPTION {
+  id                BigInt  @unique
+  code              String  @id
+  name              String?
+  dear              String?
+  letter            String?
+  concept           String?
+  movie             String?
+  challengeConcept  String?
+  challengeKeyword  String?
+  challengeActivity String?
+  maintainConcept   String?
+  maintainKeyword   String?
+  maintainActivity  String?
+  reconcileConcept  String?
+  reconcileKeyword  String?
+  reconcileActivity String?
 }
