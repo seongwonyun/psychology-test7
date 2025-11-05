@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     // 3) 생성 (스키마에 createdAt/updatedAt 자동 처리가 없다면 아래 now 사용)
     const now = new Date();
 
-    const result = await prisma.results.create({
+    const result = await prisma.result.create({
       data: {
         answers: answers as any, // Prisma Json 타입
         code: code.trim(),

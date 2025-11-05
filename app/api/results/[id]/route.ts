@@ -112,7 +112,7 @@ export async function GET(
     return NextResponse.json({ error: "INVALID_ID" }, { status: 400 });
   }
 
-  const data = await prisma.results.findUnique({ where: { id: numericId } });
+  const data = await prisma.result.findUnique({ where: { id: numericId } });
   if (!data) return NextResponse.json({ error: "NOT_FOUND" }, { status: 404 });
 
   return NextResponse.json({ success: true, data });
@@ -135,7 +135,7 @@ export async function PATCH(
     nickname: string | null;
   }>;
 
-  const updated = await prisma.results.update({
+  const updated = await prisma.result.update({
     where: { id: numericId },
     data: {
       ...(body.comment !== undefined ? { comment: body.comment } : {}),

@@ -17,7 +17,7 @@ export async function GET(req: Request) {
       );
     }
 
-    const item = await prisma.prescriptions.findUnique({
+    const item = await prisma.prescription.findUnique({
       where: { code }, // code가 PK
     });
 
