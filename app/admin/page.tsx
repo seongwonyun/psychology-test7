@@ -96,10 +96,10 @@ import { prisma } from "@/app/lib/prisma";
 import Link from "next/link";
 
 // Prisma 쿼리의 반환 타입에서 '하나의 행' 타입만 뽑아오기
-type ResultRow = Awaited<ReturnType<typeof prisma.results.findMany>>[number];
+type ResultRow = Awaited<ReturnType<typeof prisma.result.findMany>>[number];
 
 export default async function ResponsesPage() {
-  const responses = await prisma.results.findMany({
+  const responses = await prisma.result.findMany({
     orderBy: { created_at: "desc" },
   });
 
